@@ -1,43 +1,59 @@
 # CardDay
 
-一个基于 **Cloudflare Workers + D1** 的信用卡账单提醒与状态管理项目。
+CardDay 是一个基于 **Cloudflare Workers + D1** 的信用卡账单提醒与状态管理项目。
 
-> 这个仓库的核心不是旧前端页面，而是 `index.js` 这份 Worker 服务代码。当前已按 **CardDay** 的独立项目方向整理。
+它解决的是这类需求：
+- 记录信用卡账单日 / 还款规则
+- 自动计算还款日与免息期
+- 每天定时重置“本期未还”状态
+- 在到期前自动发送提醒
+- 提供一个轻量 Web 看板查看当前卡片状态
 
-## 核心能力
+## 当前状态
 
-- 信用卡账单数据存储（D1）
-- 自动计算还款日 / 免息期
-- 每日定时重置当日出账卡的还款状态
-- 每日定时检查并发送还款提醒
-- Web 页面查看卡片列表
-- 点击切换“已还款 / 未还款”状态
-- 表格排序与到期提醒展示
+当前仓库已经完成：
+
+- 项目从旧实验仓库中独立为 **CardDay**
+- Worker 入口从单文件打包产物开始拆分为源码结构
+- 已建立 `src/`、`lib/`、`templates/` 的模块化目录
+- 已移除旧前端 `legacy/`
+- 已补基础工程文件：`.gitignore`、`package.json`、`wrangler.toml`
 
 ## 技术栈
 
 - Cloudflare Workers
 - Cloudflare D1
 - Cron Triggers
-- 原生 HTML 输出（Worker 直接返回页面）
-- `date-fns`（已打包进 `index.js`）
+- 原生 HTML 模板输出
+- ES Modules
 
-## 当前仓库结构
+## 目录结构
 
 ```text
-index.js              # Worker 主程序（核心）
-wrangler.toml         # Cloudflare Worker 配置示例
-schema.sql            # D1 数据库初始化 SQL
-README.md             # 项目说明
-legacy/               # 旧前端实验文件（非核心，可后续删除）
+src/
+  index.js                 # Worker 入口
+  lib/
+    billing.js             # 账单/还款计算
+    db.js                  # D1 查询与写入
+    http.js                # CORS / HTTP 辅助
+    reminder.js            # 提醒发送逻辑
+  templates/
+    dashboard.js           # 看板 HTML 模板
+  vendor/
+    date-fns-lite.js       # 当前使用的轻量日期工具
+
+index.bundle.js            # 旧打包产物备份（仅供参考）
+schema.sql                 # D1 初始化 SQL
+wrangler.toml              # Worker 配置
+package.json               # 基础工程配置
 ```
 
 ## 快速开始
 
-### 1. 安装 Wrangler
+### 1. 安装依赖
 
 ```bash
-npm install -g wrangler
+npm install
 ```
 
 ### 2. 创建 D1 数据库
@@ -46,9 +62,16 @@ npm install -g wrangler
 wrangler d1 create cardday-db
 ```
 
-把返回的数据库信息填入 `wrangler.toml`。
+将返回的 `database_id` 填入 `wrangler.toml`：
 
-### 3. 初始化表结构
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "cardday-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+```
+
+### 3. 初始化数据库
 
 ```bash
 wrangler d1 execute cardday-db --file=schema.sql
@@ -57,50 +80,64 @@ wrangler d1 execute cardday-db --file=schema.sql
 ### 4. 本地开发
 
 ```bash
-wrangler dev
+npm run dev
 ```
 
 ### 5. 发布
 
 ```bash
-wrangler deploy
+npm run deploy
 ```
 
 ## 定时任务
 
-项目依赖 Cron Triggers：
+`wrangler.toml` 里默认配置了两条 Cron：
 
-- 每天 **0 点**：把当日账单日的卡重置为“未还款”
-- 每天 **9 点**：检查并发送提醒
+- `0 0 * * *`：每天 0 点重置当日账单卡的“已还款”状态
+- `0 9 * * *`：每天 9 点执行还款提醒检查
 
-可在 `wrangler.toml` 中配置。
+## 环境变量
 
-## 环境变量 / 绑定
+当前提醒逻辑使用 **企业微信应用消息**，你需要配置：
 
-你需要至少配置：
+- `CORP_ID`
+- `CORP_SECRET`
+- `AGENT_ID`
+- `TO_USER`
+- `REMINDER_THRESHOLD`（可选，默认 1）
 
-- `DB`：D1 数据库绑定
-- （如果提醒逻辑里需要）Telegram / Bot 相关环境变量
+这些变量可通过 Wrangler secrets / vars 配置。
 
-## 关于旧文件
+## 开发说明
 
-仓库原先有一套本地前端页面文件：
+### 当前入口
 
-- `index.html`
-- `app.js`
-- `styles.css`
+Worker 现在以：
 
-这些不是当前项目核心，已移入 `legacy/`，避免和 Worker 主程序混淆。
+```toml
+main = "src/index.js"
+```
 
-## 后续建议
+运行。
 
-下一步最值得做的是：
+### 关于 `index.bundle.js`
 
-1. 给 `index.js` 反编译/源码化重构
-2. 把 Worker 主逻辑拆分成模块
-3. 把 HTML 模板独立出去
-4. 补 `.gitignore`
-5. 明确提醒发送渠道配置
+仓库里保留了旧打包产物备份，仅用于：
+- 对照旧逻辑
+- 手工迁移功能
+- 校验拆分后的行为
+
+后续功能开发应只针对 `src/` 目录进行。
+
+## 下一步建议
+
+后续值得继续做的方向：
+
+1. 完善 dashboard 交互（筛选、排序、状态切换）
+2. 补银行管理 / 卡片录入 API
+3. 为模板和账单计算增加测试
+4. 将轻量日期工具替换为正式依赖或继续内建
+5. 明确部署文档与告警策略
 
 ## License
 
