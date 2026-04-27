@@ -2191,7 +2191,7 @@ var src_default = {
       <html lang="zh-CN">
       <head>
         <meta charset="UTF-8">
-        <title>\u4FE1\u7528\u5361\u4FE1\u606F</title>
+        <title>CardDay</title>
         <style>
           body {
             font-family: Arial, sans-serif;

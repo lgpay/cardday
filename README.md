@@ -1,8 +1,8 @@
-# ccday
+# CardDay
 
 一个基于 **Cloudflare Workers + D1** 的信用卡账单提醒与状态管理项目。
 
-> 这个仓库的核心不是旧前端页面，而是 `index.js` 这份 Worker 服务代码。当前已按“可独立维护的新项目”方向整理。
+> 这个仓库的核心不是旧前端页面，而是 `index.js` 这份 Worker 服务代码。当前已按 **CardDay** 的独立项目方向整理。
 
 ## 核心能力
 
@@ -29,7 +29,7 @@ index.js              # Worker 主程序（核心）
 wrangler.toml         # Cloudflare Worker 配置示例
 schema.sql            # D1 数据库初始化 SQL
 README.md             # 项目说明
-legacy/               # 旧前端实验文件（非核心）
+legacy/               # 旧前端实验文件（非核心，可后续删除）
 ```
 
 ## 快速开始
@@ -43,7 +43,7 @@ npm install -g wrangler
 ### 2. 创建 D1 数据库
 
 ```bash
-wrangler d1 create ccday-db
+wrangler d1 create cardday-db
 ```
 
 把返回的数据库信息填入 `wrangler.toml`。
@@ -51,7 +51,7 @@ wrangler d1 create ccday-db
 ### 3. 初始化表结构
 
 ```bash
-wrangler d1 execute ccday-db --file=schema.sql
+wrangler d1 execute cardday-db --file=schema.sql
 ```
 
 ### 4. 本地开发

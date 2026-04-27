@@ -1,4 +1,4 @@
-name = "ccday"
+name = "cardday"
 main = "index.js"
 compatibility_date = "2026-04-27"
 
@@ -7,5 +7,5 @@ crons = ["0 0 * * *", "0 9 * * *"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "ccday-db"
+database_name = "cardday-db"
 database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
