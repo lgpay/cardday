@@ -13,12 +13,18 @@ async function handleToggleRepaid(request, env) {
   })
 }
 
-async function handleIndex(env) {
+async function handleCardsApi(env) {
   const corsHeaders = getCorsHeaders()
   const cards = await listCards(env)
   const cardInfo = buildCardViewModels(cards)
+  return new Response(JSON.stringify({ items: cardInfo }), {
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
+  })
+}
 
-  return new Response(renderDashboard(cardInfo), {
+async function handleIndex(env) {
+  const corsHeaders = getCorsHeaders()
+  return new Response(renderDashboard(), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders }
   })
 }
@@ -39,6 +45,17 @@ export default {
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/cards') {
+      try {
+        return await handleCardsApi(env)
+      } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        })
+      }
     }
 
     if (request.method === 'POST' && url.pathname === '/api/toggle-repaid') {
