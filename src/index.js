@@ -1,4 +1,5 @@
-import { getCorsHeaders } from './lib/http.js'
+import { createSessionValue, getSessionCookieName, getSessionTtl, verifySessionValue } from './lib/auth.js'
+import { buildCookie, getCorsHeaders, parseCookies } from './lib/http.js'
 import {
   createBank,
   createCard,
@@ -18,6 +19,7 @@ import {
 import { buildCardViewModels } from './lib/billing.js'
 import { checkAndSendReminders } from './lib/reminder.js'
 import { renderDashboard } from './templates/dashboard.js'
+import { renderLoginPage } from './templates/login.js'
 
 function json(data, init = {}) {
   const corsHeaders = getCorsHeaders()
@@ -31,8 +33,51 @@ function json(data, init = {}) {
   })
 }
 
+function html(body, init = {}) {
+  const corsHeaders = getCorsHeaders()
+  return new Response(body, {
+    ...init,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      ...corsHeaders,
+      ...(init.headers || {})
+    }
+  })
+}
+
+function redirect(location, init = {}) {
+  return new Response(null, {
+    status: 302,
+    ...init,
+    headers: {
+      Location: location,
+      ...(init.headers || {})
+    }
+  })
+}
+
 function badRequest(message) {
   return json({ error: message }, { status: 400 })
+}
+
+function unauthorizedJson() {
+  return json({ error: '未登录或登录已失效' }, { status: 401 })
+}
+
+function getLoginPassword(env) {
+  return String(env.LOGIN_PASSWORD || '').trim()
+}
+
+async function isAuthenticated(request, env) {
+  const password = getLoginPassword(env)
+  if (!password) return true
+  const cookies = parseCookies(request)
+  const sessionValue = cookies[getSessionCookieName()]
+  return verifySessionValue(password, sessionValue)
+}
+
+async function requireAuth(request, env) {
+  return isAuthenticated(request, env)
 }
 
 function normalizeBankPayload(payload = {}) {
@@ -91,6 +136,41 @@ function normalizeCardPayload(payload = {}) {
     repaymentDay: graceType ? null : repaymentDay,
     repaid
   }
+}
+
+async function handleLoginPage(request, env) {
+  if (await isAuthenticated(request, env)) {
+    return redirect('/')
+  }
+  return html(renderLoginPage())
+}
+
+async function handleLoginSubmit(request, env) {
+  const expectedPassword = getLoginPassword(env)
+  if (!expectedPassword) {
+    return redirect('/')
+  }
+
+  const form = await request.formData()
+  const password = String(form.get('password') || '')
+  if (password !== expectedPassword) {
+    return html(renderLoginPage('密码不对，再试一次。'), { status: 401 })
+  }
+
+  const sessionValue = await createSessionValue(expectedPassword)
+  return redirect('/', {
+    headers: {
+      'Set-Cookie': buildCookie(getSessionCookieName(), sessionValue, { maxAge: getSessionTtl() })
+    }
+  })
+}
+
+async function handleLogout() {
+  return redirect('/login', {
+    headers: {
+      'Set-Cookie': buildCookie(getSessionCookieName(), '', { maxAge: 0 })
+    }
+  })
 }
 
 async function handleToggleRepaid(request, env) {
@@ -204,7 +284,11 @@ async function handleDeleteCard(env, cardId) {
   return json({ success: true, cardId })
 }
 
-async function handleIndex() {
+async function handleIndex(request, env) {
+  const password = getLoginPassword(env)
+  if (password && !(await isAuthenticated(request, env))) {
+    return redirect('/login')
+  }
   const corsHeaders = getCorsHeaders()
   return new Response(renderDashboard(), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders }
@@ -224,30 +308,47 @@ export default {
   async fetch(request, env) {
     const corsHeaders = getCorsHeaders()
     const url = new URL(request.url)
-    const cardIdMatch = url.pathname.match(/^\/api\/cards\/(\d+)$/)
-    const bankIdMatch = url.pathname.match(/^\/api\/banks\/(\d+)$/)
+    const pathname = url.pathname
+    const cardIdMatch = pathname.match(/^\/api\/cards\/(\d+)$/)
+    const bankIdMatch = pathname.match(/^\/api\/banks\/(\d+)$/)
+    const isApi = pathname.startsWith('/api/')
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
     }
 
     try {
-      if (request.method === 'GET' && url.pathname === '/api/cards') {
+      if (request.method === 'GET' && pathname === '/login') {
+        return await handleLoginPage(request, env)
+      }
+      if (request.method === 'POST' && pathname === '/login') {
+        return await handleLoginSubmit(request, env)
+      }
+      if ((request.method === 'POST' || request.method === 'GET') && pathname === '/logout') {
+        return await handleLogout()
+      }
+
+      if (!(await requireAuth(request, env))) {
+        if (isApi) return unauthorizedJson()
+        return redirect('/login')
+      }
+
+      if (request.method === 'GET' && pathname === '/api/cards') {
         return await handleCardsApi(env)
       }
-      if (request.method === 'GET' && url.pathname === '/api/banks') {
+      if (request.method === 'GET' && pathname === '/api/banks') {
         return await handleBanksApi(env)
       }
-      if (request.method === 'GET' && url.pathname === '/api/reminder-settings') {
+      if (request.method === 'GET' && pathname === '/api/reminder-settings') {
         return await handleReminderSettingsApi(env)
       }
-      if (request.method === 'POST' && url.pathname === '/api/reminder-settings/test') {
+      if (request.method === 'POST' && pathname === '/api/reminder-settings/test') {
         return await handleReminderTest(env)
       }
-      if (request.method === 'PUT' && url.pathname === '/api/reminder-settings') {
+      if (request.method === 'PUT' && pathname === '/api/reminder-settings') {
         return await handleUpdateReminderSettings(request, env)
       }
-      if (request.method === 'POST' && url.pathname === '/api/banks') {
+      if (request.method === 'POST' && pathname === '/api/banks') {
         return await handleCreateBank(request, env)
       }
       if (request.method === 'PUT' && bankIdMatch) {
@@ -256,7 +357,7 @@ export default {
       if (request.method === 'DELETE' && bankIdMatch) {
         return await handleDeleteBank(env, Number(bankIdMatch[1]))
       }
-      if (request.method === 'POST' && url.pathname === '/api/cards') {
+      if (request.method === 'POST' && pathname === '/api/cards') {
         return await handleCreateCard(request, env)
       }
       if (request.method === 'PUT' && cardIdMatch) {
@@ -265,10 +366,10 @@ export default {
       if (request.method === 'DELETE' && cardIdMatch) {
         return await handleDeleteCard(env, Number(cardIdMatch[1]))
       }
-      if (request.method === 'POST' && url.pathname === '/api/toggle-repaid') {
+      if (request.method === 'POST' && pathname === '/api/toggle-repaid') {
         return await handleToggleRepaid(request, env)
       }
-      return await handleIndex()
+      return await handleIndex(request, env)
     } catch (error) {
       return json({ error: error.message || '服务器错误' }, { status: 500 })
     }
