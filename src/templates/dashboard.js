@@ -579,7 +579,7 @@ export function renderDashboard() {
         if (status === 'unpaid' && card.repaid) return false;
         if (status === 'dueSoon' && (card.repaid || card.daysToRepayment < 0 || card.daysToRepayment > 3)) return false;
         if (status === 'overdue' && (card.repaid || card.daysToRepayment >= 0)) return false;
-        if (status === 'unexpired' && (card.repaid || card.daysToRepayment < 4)) return false;
+        if (status === 'unexpired' && (card.repaid || card.daysToRepayment < 0)) return false;
         return true;
       });
 
