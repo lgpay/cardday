@@ -459,10 +459,10 @@ export function renderDashboard() {
           <option value="daysToRepaymentDesc">按到期时间 ↓</option>
           <option value="billingDayAsc">按账单日 ↑</option>
           <option value="billingDayDesc">按账单日 ↓</option>
+          <option value="gracePeriodAsc">按免息期 ↑</option>
+          <option value="gracePeriodDesc">按免息期 ↓</option>
           <option value="bankNameAsc">按银行名称 A→Z</option>
           <option value="bankNameDesc">按银行名称 Z→A</option>
-          <option value="cardNameAsc">按卡片名称 A→Z</option>
-          <option value="cardNameDesc">按卡片名称 Z→A</option>
         </select>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
@@ -591,10 +591,10 @@ export function renderDashboard() {
       items.sort((a, b) => {
         if (sorter === 'billingDayAsc') return a.billingDay - b.billingDay || a.cardId - b.cardId;
         if (sorter === 'billingDayDesc') return b.billingDay - a.billingDay || a.cardId - b.cardId;
+        if (sorter === 'gracePeriodAsc') return a.gracePeriod - b.gracePeriod || a.cardId - b.cardId;
+        if (sorter === 'gracePeriodDesc') return b.gracePeriod - a.gracePeriod || a.cardId - b.cardId;
         if (sorter === 'bankNameAsc') return String(a.bankName).localeCompare(String(b.bankName), 'zh-CN') || a.cardId - b.cardId;
         if (sorter === 'bankNameDesc') return String(b.bankName).localeCompare(String(a.bankName), 'zh-CN') || a.cardId - b.cardId;
-        if (sorter === 'cardNameAsc') return String(a.cardName || '').localeCompare(String(b.cardName || ''), 'zh-CN') || a.cardId - b.cardId;
-        if (sorter === 'cardNameDesc') return String(b.cardName || '').localeCompare(String(a.cardName || ''), 'zh-CN') || a.cardId - b.cardId;
         if (sorter === 'daysToRepaymentDesc') return b.daysToRepayment - a.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
         return a.daysToRepayment - b.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
       });
@@ -610,8 +610,8 @@ export function renderDashboard() {
       const pairs = {
         daysToRepayment: ['daysToRepaymentAsc', 'daysToRepaymentDesc'],
         billingDay: ['billingDayAsc', 'billingDayDesc'],
-        bankName: ['bankNameAsc', 'bankNameDesc'],
-        cardName: ['cardNameAsc', 'cardNameDesc']
+        gracePeriod: ['gracePeriodAsc', 'gracePeriodDesc'],
+        bankName: ['bankNameAsc', 'bankNameDesc']
       };
       const [asc, desc] = pairs[field] || [];
       if (!asc) return;
@@ -693,10 +693,10 @@ export function renderDashboard() {
         daysToRepaymentDesc: '按到期时间 ↓',
         billingDayAsc: '按账单日 ↑',
         billingDayDesc: '按账单日 ↓',
+        gracePeriodAsc: '按免息期 ↑',
+        gracePeriodDesc: '按免息期 ↓',
         bankNameAsc: '按银行名 A→Z',
-        bankNameDesc: '按银行名 Z→A',
-        cardNameAsc: '按卡片名称 A→Z',
-        cardNameDesc: '按卡片名称 Z→A'
+        bankNameDesc: '按银行名 Z→A'
       };
 
       contentEl.innerHTML = [
@@ -706,11 +706,11 @@ export function renderDashboard() {
         '<table>',
         '<thead><tr>' +
         '<th class="sortable-th" data-sort-field="bankName"><span class="sort-label">银行 <span class="sort-arrow">' + getSortArrow('bankName') + '</span></span></th>' +
-        '<th class="sortable-th" data-sort-field="cardName"><span class="sort-label">卡片名称 <span class="sort-arrow">' + getSortArrow('cardName') + '</span></span></th>' +
+        '<th>卡片名称</th>' +
         '<th>尾号</th>' +
         '<th class="sortable-th" data-sort-field="billingDay"><span class="sort-label">账单日 <span class="sort-arrow">' + getSortArrow('billingDay') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="daysToRepayment"><span class="sort-label">还款日 <span class="sort-arrow">' + getSortArrow('daysToRepayment') + '</span></span></th>' +
-        '<th>免息期</th>' +
+        '<th class="sortable-th" data-sort-field="gracePeriod"><span class="sort-label">免息期 <span class="sort-arrow">' + getSortArrow('gracePeriod') + '</span></span></th>' +
         '<th>状态</th>' +
         '</tr></thead>',
         '<tbody>' + rows + '</tbody>',
