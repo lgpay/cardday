@@ -93,10 +93,23 @@ function normalizeBankPayload(payload = {}) {
 function normalizeReminderPayload(payload = {}) {
   const reminderEnabled = payload.reminderEnabled !== false && payload.reminderEnabled !== 0 && payload.reminderEnabled !== '0'
   const reminderThreshold = Number(payload.reminderThreshold)
+  const qywxCorpId = String(payload.qywxCorpId || '').trim()
+  const qywxAgentId = String(payload.qywxAgentId || '').trim()
+  const qywxToUser = String(payload.qywxToUser || '').trim()
+  const qywxCorpSecret = payload.qywxCorpSecret == null ? '' : String(payload.qywxCorpSecret).trim()
+
   if (!Number.isInteger(reminderThreshold) || reminderThreshold < 0 || reminderThreshold > 30) {
     throw new Error('reminderThreshold 需在 0-30 之间')
   }
-  return { reminderEnabled, reminderThreshold }
+
+  return {
+    reminderEnabled,
+    reminderThreshold,
+    qywxCorpId,
+    qywxAgentId,
+    qywxToUser,
+    qywxCorpSecret
+  }
 }
 
 function normalizeCardPayload(payload = {}) {
@@ -209,10 +222,10 @@ async function handleReminderSettingsApi(env) {
     item: {
       ...settings,
       envStatus: {
-        corpIdConfigured: !!env.CORP_ID,
-        corpSecretConfigured: !!env.CORP_SECRET,
-        agentIdConfigured: !!env.AGENT_ID,
-        toUserConfigured: !!env.TO_USER
+        corpIdConfigured: !!settings.qywxCorpId || !!env.CORP_ID,
+        corpSecretConfigured: !!settings.qywxCorpSecretConfigured || !!env.CORP_SECRET,
+        agentIdConfigured: !!settings.qywxAgentId || !!env.AGENT_ID,
+        toUserConfigured: !!settings.qywxToUser || !!env.TO_USER
       }
     }
   })

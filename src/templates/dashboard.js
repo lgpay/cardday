@@ -835,6 +835,29 @@ export function renderDashboard() {
         </div>
 
         <div class="modal-section">
+          <h3 class="section-title">企业微信通道配置</h3>
+          <div class="config-grid">
+            <div class="field-group">
+              <label for="qywxCorpIdInput">CORP_ID</label>
+              <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业 ID" />
+            </div>
+            <div class="field-group">
+              <label for="qywxAgentIdInput">AGENT_ID</label>
+              <input id="qywxAgentIdInput" class="field" type="text" placeholder="应用 AgentId" />
+            </div>
+            <div class="field-group full">
+              <label for="qywxToUserInput">TO_USER</label>
+              <input id="qywxToUserInput" class="field" type="text" placeholder="接收成员，如 ZhangSan 或 @all" />
+            </div>
+            <div class="field-group full">
+              <label for="qywxCorpSecretInput">CORP_SECRET（留空表示不修改）</label>
+              <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
+            </div>
+          </div>
+          <div class="status-note">企业微信密钥不会在页面回显。留空保存时，表示保留当前已配置的密钥。</div>
+        </div>
+
+        <div class="modal-section">
           <h3 class="section-title">企业微信发送状态</h3>
           <div id="reminderEnvStatus" class="status-stack"></div>
           <div class="status-note">这里只展示 Worker 环境变量是否已配置，具体密钥不会在页面显示。</div>
@@ -918,6 +941,10 @@ export function renderDashboard() {
     const reminderEnabledInput = document.getElementById('reminderEnabledInput');
     const reminderThresholdInput = document.getElementById('reminderThresholdInput');
     const reminderThresholdError = document.getElementById('reminderThresholdError');
+    const qywxCorpIdInput = document.getElementById('qywxCorpIdInput');
+    const qywxAgentIdInput = document.getElementById('qywxAgentIdInput');
+    const qywxToUserInput = document.getElementById('qywxToUserInput');
+    const qywxCorpSecretInput = document.getElementById('qywxCorpSecretInput');
     const reminderEnvStatus = document.getElementById('reminderEnvStatus');
     const cancelReminderBtn = document.getElementById('cancelReminderBtn');
     const testReminderBtn = document.getElementById('testReminderBtn');
@@ -1219,6 +1246,10 @@ export function renderDashboard() {
       reminderSettings = item || null;
       reminderEnabledInput.value = item && item.reminderEnabled ? '1' : '0';
       reminderThresholdInput.value = item && Number.isFinite(Number(item.reminderThreshold)) ? String(item.reminderThreshold) : '1';
+      qywxCorpIdInput.value = item && item.qywxCorpId ? item.qywxCorpId : '';
+      qywxAgentIdInput.value = item && item.qywxAgentId ? item.qywxAgentId : '';
+      qywxToUserInput.value = item && item.qywxToUser ? item.qywxToUser : '';
+      qywxCorpSecretInput.value = '';
       renderReminderEnvStatus(item && item.envStatus ? item.envStatus : null);
     }
 
@@ -1360,7 +1391,11 @@ export function renderDashboard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             reminderEnabled: reminderEnabledInput.value === '1',
-            reminderThreshold: Number(reminderThresholdInput.value)
+            reminderThreshold: Number(reminderThresholdInput.value),
+            qywxCorpId: qywxCorpIdInput.value.trim(),
+            qywxAgentId: qywxAgentIdInput.value.trim(),
+            qywxToUser: qywxToUserInput.value.trim(),
+            qywxCorpSecret: qywxCorpSecretInput.value.trim()
           })
         });
         const data = await res.json().catch(() => ({}));

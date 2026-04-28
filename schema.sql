@@ -25,3 +25,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('reminder_enabled', '1');
 INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('reminder_threshold', '1');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_corp_id', '');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_agent_id', '');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_to_user', '');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_corp_secret', '');

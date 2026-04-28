@@ -69,7 +69,11 @@ export async function getAppSettings(env) {
   const map = Object.fromEntries(rows.map((row) => [row.setting_key, row.setting_value]))
   return {
     reminderEnabled: map.reminder_enabled !== '0',
-    reminderThreshold: Number(map.reminder_threshold || '1')
+    reminderThreshold: Number(map.reminder_threshold || '1'),
+    qywxCorpId: String(map.qywx_corp_id || ''),
+    qywxAgentId: String(map.qywx_agent_id || ''),
+    qywxToUser: String(map.qywx_to_user || ''),
+    qywxCorpSecretConfigured: !!String(map.qywx_corp_secret || '')
   }
 }
 
@@ -82,6 +86,12 @@ export async function upsertAppSetting(env, key, value) {
 export async function updateReminderSettings(env, input) {
   await upsertAppSetting(env, 'reminder_enabled', input.reminderEnabled ? '1' : '0')
   await upsertAppSetting(env, 'reminder_threshold', input.reminderThreshold)
+  await upsertAppSetting(env, 'qywx_corp_id', input.qywxCorpId || '')
+  await upsertAppSetting(env, 'qywx_agent_id', input.qywxAgentId || '')
+  await upsertAppSetting(env, 'qywx_to_user', input.qywxToUser || '')
+  if (input.qywxCorpSecret !== undefined && input.qywxCorpSecret !== null && input.qywxCorpSecret !== '') {
+    await upsertAppSetting(env, 'qywx_corp_secret', input.qywxCorpSecret)
+  }
   return getAppSettings(env)
 }
 
