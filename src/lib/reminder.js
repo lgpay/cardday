@@ -15,11 +15,11 @@ function getQywxConfig(env, settings = null) {
 
 export async function sendQYWXMessage(env, message, settings = null) {
   const config = getQywxConfig(env, settings)
-  if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
-    throw new Error('企业微信通道参数未配置完整')
-  }
 
   if (config.proxyUrl) {
+    if (!config.proxyUrl) {
+      throw new Error('代理地址未配置')
+    }
     const proxyHeaders = { 'Content-Type': 'application/json' }
     if (config.proxyToken) {
       proxyHeaders.Authorization = `Bearer ${config.proxyToken}`
@@ -43,6 +43,10 @@ export async function sendQYWXMessage(env, message, settings = null) {
       throw new Error(proxyData.error || proxyData.message || `代理发送失败（HTTP ${proxyRes.status}）`)
     }
     return
+  }
+
+  if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
+    throw new Error('企业微信通道参数未配置完整')
   }
 
   const tokenUrl = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpId}&corpsecret=${config.corpSecret}`
