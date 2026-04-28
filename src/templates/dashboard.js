@@ -743,7 +743,7 @@ export function renderDashboard() {
         <div class="modal-section">
           <h3 class="section-title">补充状态</h3>
           <div class="switch-row">
-            <label><input id="isNextPeriodInput" type="checkbox" /> 本月消费计入下期账单</label>
+            <label><input id="isNextPeriodInput" type="checkbox" /> 账单日当天消费计入下期账单</label>
             <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
           </div>
         </div>
