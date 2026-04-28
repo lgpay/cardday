@@ -6,10 +6,20 @@ import { renderDashboard } from './templates/dashboard.js'
 
 async function handleToggleRepaid(request, env) {
   const corsHeaders = getCorsHeaders()
-  const { cardId, repaid } = await request.json()
+  const payload = await request.json()
+  const cardId = Number(payload?.cardId)
+  const repaid = payload?.repaid ? 1 : 0
+
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return new Response(JSON.stringify({ error: 'cardId 不合法' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
+    })
+  }
+
   await updateRepaidStatus(env, cardId, repaid)
-  return new Response(JSON.stringify({ success: true }), {
-    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  return new Response(JSON.stringify({ success: true, cardId, repaid }), {
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
   })
 }
 
@@ -17,7 +27,13 @@ async function handleCardsApi(env) {
   const corsHeaders = getCorsHeaders()
   const cards = await listCards(env)
   const cardInfo = buildCardViewModels(cards)
-  return new Response(JSON.stringify({ items: cardInfo }), {
+  return new Response(JSON.stringify({
+    items: cardInfo,
+    meta: {
+      count: cardInfo.length,
+      generatedAt: new Date().toISOString()
+    }
+  }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
   })
 }
@@ -53,7 +69,7 @@ export default {
       } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
         })
       }
     }
@@ -64,7 +80,7 @@ export default {
       } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
         })
       }
     }

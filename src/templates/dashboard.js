@@ -7,45 +7,62 @@ export function renderDashboard() {
   <title>CardDay</title>
   <style>
     :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: #e5e7eb;
+      --bg: #f3f7fb;
+      --card: rgba(255, 255, 255, 0.92);
+      --card-strong: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --primary: #2563eb;
+      --primary-soft: #dbeafe;
       --ok-bg: #dcfce7;
       --ok-text: #166534;
       --warn-bg: #fef3c7;
       --warn-text: #b45309;
       --danger-bg: #fee2e2;
       --danger-text: #b91c1c;
-      --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      --idle-bg: #eef2ff;
+      --idle-text: #4338ca;
+      --shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+      --radius: 22px;
     }
 
     * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
       margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.10), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
       color: var(--text);
     }
 
     .wrap {
-      max-width: 1100px;
+      max-width: 1240px;
       margin: 0 auto;
       padding: 28px 16px 40px;
     }
 
-    .hero, .table-wrap {
+    .hero,
+    .panel,
+    .table-wrap {
       background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
 
     .hero {
       padding: 24px;
       margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr;
+      gap: 18px;
+      align-items: start;
     }
 
     .eyebrow {
@@ -54,63 +71,383 @@ export function renderDashboard() {
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--primary);
-      font-weight: 700;
+      font-weight: 800;
     }
 
     h1 {
       margin: 0;
-      font-size: 32px;
-      line-height: 1.1;
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
     }
 
     .subtitle {
       margin: 12px 0 0;
       color: var(--muted);
-      line-height: 1.7;
-      max-width: 720px;
+      line-height: 1.75;
+      max-width: 760px;
     }
 
-    .table-wrap { overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
-    th { background: #f8fafc; color: #374151; font-size: 14px; }
+    .meta {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(3, minmax(140px, 0.45fr)) auto;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .panel {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .field,
+    .button {
+      width: 100%;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.9);
+      color: var(--text);
+      font-size: 14px;
+      padding: 0 14px;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .field:focus,
+    .button:focus {
+      border-color: rgba(37,99,235,0.5);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    .button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 10px 18px rgba(37,99,235,0.24);
+    }
+
+    .button:hover { transform: translateY(-1px); }
+    .button.secondary {
+      background: rgba(255,255,255,0.92);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .helper-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .legend .badge { cursor: default; }
+
+    .table-wrap {
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-strong);
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    tbody tr { transition: background-color .16s ease; }
+    tbody tr:hover { background: #f8fbff; }
     tr:last-child td { border-bottom: none; }
-    .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #1d4ed8; }
-    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+    .bank-cell,
+    .card-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .bank-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #fff;
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+    }
+
+    .bank-fallback {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid #bfdbfe;
+      flex: 0 0 auto;
+    }
+
+    .bank-name,
+    .card-title {
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .muted,
+    .subtext {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .code {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: #1d4ed8;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 5px 8px;
+      border-radius: 999px;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      border: none;
+    }
+
     .ok { background: var(--ok-bg); color: var(--ok-text); }
     .warn { background: var(--warn-bg); color: var(--warn-text); }
     .danger { background: var(--danger-bg); color: var(--danger-text); }
-    .idle { background: #eef2f7; color: #475569; }
-    .empty, .loading { padding: 48px 20px; text-align: center; color: var(--muted); }
-    .status-btn { border: none; cursor: pointer; transition: transform .18s ease, opacity .18s ease; }
-    .status-btn:hover { transform: translateY(-1px); opacity: .92; }
-    .status-btn:disabled { cursor: wait; opacity: .6; }
-    .toast {
-      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
-      background: rgba(17, 24, 39, 0.95); color: #fff; padding: 12px 16px;
-      border-radius: 12px; box-shadow: var(--shadow); opacity: 0; pointer-events: none;
-      transition: opacity .2s ease, transform .2s ease;
+    .idle { background: var(--idle-bg); color: var(--idle-text); }
+
+    .status-btn {
+      cursor: pointer;
+      transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
     }
+
+    .status-btn:hover { transform: translateY(-1px); opacity: .96; }
+    .status-btn:disabled { cursor: wait; opacity: .65; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sort-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.9);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .empty, .loading {
+      padding: 52px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.96);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index: 10;
+    }
+
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
+
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr 1fr; }
+    }
 
     @media (max-width: 760px) {
       .wrap { padding: 18px 12px 28px; }
-      .hero { padding: 18px; }
-      h1 { font-size: 26px; }
+      .hero, .panel { padding: 18px; }
+      h1 { font-size: 28px; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar { grid-template-columns: 1fr; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
-      tr { padding: 14px; border-bottom: 1px solid var(--border); }
-      td { padding: 8px 0; border-bottom: none; }
-      td::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+      tbody { padding: 8px; }
+      tr {
+        margin: 10px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+      }
+      td {
+        padding: 10px 14px;
+        border-bottom: none;
+      }
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="hero">
-      <p class="eyebrow">CardDay</p>
-      <h1>信用卡账单看板</h1>
-      <p class="subtitle">当前支持 API 拉取卡片列表与切换还款状态。后续再补卡片录入与筛选能力。</p>
+      <div>
+        <p class="eyebrow">CardDay</p>
+        <h1>信用卡账单看板</h1>
+        <p class="subtitle">把卡片、还款日、免息期和当前状态放到一页里。支持搜索、筛选、排序和一键切换已还款状态。</p>
+        <div class="meta">
+          <span class="meta-chip">📌 账单总览</span>
+          <span class="meta-chip">⚡ 线上实时数据</span>
+          <span class="meta-chip" id="lastUpdatedChip">🕒 等待加载</span>
+        </div>
+      </div>
+      <div class="summary-grid" id="summaryGrid">
+        <div class="stat"><div class="stat-label">总卡片</div><div class="stat-value">--</div></div>
+        <div class="stat"><div class="stat-label">待还款</div><div class="stat-value">--</div></div>
+        <div class="stat"><div class="stat-label">3 天内到期</div><div class="stat-value">--</div></div>
+        <div class="stat"><div class="stat-label">已逾期</div><div class="stat-value">--</div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <input id="searchInput" class="field" type="search" placeholder="搜索银行 / 卡名 / 卡号尾号" />
+        <select id="statusFilter" class="field">
+          <option value="all">全部状态</option>
+          <option value="unpaid">仅待还款</option>
+          <option value="repaid">仅已还款</option>
+          <option value="dueSoon">3 天内到期</option>
+          <option value="overdue">已逾期</option>
+        </select>
+        <select id="bankFilter" class="field">
+          <option value="all">全部银行</option>
+        </select>
+        <select id="sortBy" class="field">
+          <option value="daysToRepaymentAsc">按到期时间排序</option>
+          <option value="billingDayAsc">按账单日排序</option>
+          <option value="bankNameAsc">按银行名称排序</option>
+        </select>
+        <button id="refreshBtn" class="button" type="button">刷新数据</button>
+      </div>
+      <div class="helper-row">
+        <div class="legend">
+          <span class="badge ok">已还款</span>
+          <span class="badge warn">3 天内到期</span>
+          <span class="badge danger">已逾期</span>
+          <span class="badge idle">未到期</span>
+        </div>
+        <div id="resultHint">准备加载数据…</div>
+      </div>
     </section>
 
     <section class="table-wrap">
@@ -124,12 +461,33 @@ export function renderDashboard() {
     const contentEl = document.getElementById('content');
     const loadingEl = document.getElementById('loading');
     const toastEl = document.getElementById('toast');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const bankFilter = document.getElementById('bankFilter');
+    const sortBy = document.getElementById('sortBy');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const resultHint = document.getElementById('resultHint');
+    const lastUpdatedChip = document.getElementById('lastUpdatedChip');
+    const summaryGrid = document.getElementById('summaryGrid');
+
+    let allItems = [];
+    let filteredItems = [];
+    let lastMeta = null;
 
     function showToast(message) {
       toastEl.textContent = message;
       toastEl.classList.add('show');
       clearTimeout(window.__toastTimer);
       window.__toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function getStatusClass(card) {
@@ -146,6 +504,75 @@ export function renderDashboard() {
       return card.daysToRepayment + ' 天后到期';
     }
 
+    function formatLocalDate(isoText) {
+      if (!isoText) return '未知';
+      const d = new Date(isoText);
+      if (Number.isNaN(d.getTime())) return isoText;
+      return d.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    function getBankInitial(name) {
+      return String(name || '卡').slice(0, 1);
+    }
+
+    function cardSearchText(card) {
+      return [
+        card.bankName,
+        card.cardName,
+        card.cardNumber,
+        String(card.cardNumber).slice(-4),
+        card.repaymentDateText
+      ].join(' ').toLowerCase();
+    }
+
+    function fillBankFilter(items) {
+      const banks = Array.from(new Set(items.map(item => item.bankName).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      const current = bankFilter.value;
+      bankFilter.innerHTML = '<option value="all">全部银行</option>' + banks.map(name => '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>').join('');
+      if (banks.includes(current)) bankFilter.value = current;
+    }
+
+    function updateSummary(items) {
+      const total = items.length;
+      const repaid = items.filter(item => item.repaid).length;
+      const unpaid = total - repaid;
+      const dueSoon = items.filter(item => !item.repaid && item.daysToRepayment >= 0 && item.daysToRepayment <= 3).length;
+      const overdue = items.filter(item => !item.repaid && item.daysToRepayment < 0).length;
+      summaryGrid.innerHTML = [
+        ['总卡片', total],
+        ['待还款', unpaid],
+        ['3 天内到期', dueSoon],
+        ['已逾期', overdue]
+      ].map(([label, value]) => '<div class="stat"><div class="stat-label">' + label + '</div><div class="stat-value">' + value + '</div></div>').join('');
+    }
+
+    function applyFilters() {
+      const q = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const bank = bankFilter.value;
+      let items = allItems.filter(card => {
+        if (q && !cardSearchText(card).includes(q)) return false;
+        if (bank !== 'all' && card.bankName !== bank) return false;
+        if (status === 'repaid' && !card.repaid) return false;
+        if (status === 'unpaid' && card.repaid) return false;
+        if (status === 'dueSoon' && (card.repaid || card.daysToRepayment < 0 || card.daysToRepayment > 3)) return false;
+        if (status === 'overdue' && (card.repaid || card.daysToRepayment >= 0)) return false;
+        return true;
+      });
+
+      const sorter = sortBy.value;
+      items.sort((a, b) => {
+        if (sorter === 'billingDayAsc') return a.billingDay - b.billingDay || a.cardId - b.cardId;
+        if (sorter === 'bankNameAsc') return String(a.bankName).localeCompare(String(b.bankName), 'zh-CN') || a.cardId - b.cardId;
+        return a.daysToRepayment - b.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
+      });
+
+      filteredItems = items;
+      updateSummary(filteredItems);
+      resultHint.textContent = '当前显示 ' + filteredItems.length + ' / ' + allItems.length + ' 张卡';
+      renderTable(filteredItems);
+    }
+
     async function toggleRepaid(cardId, repaid) {
       try {
         const res = await fetch('/api/toggle-repaid', {
@@ -153,34 +580,68 @@ export function renderDashboard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cardId, repaid: !repaid })
         });
-        if (!res.ok) throw new Error('切换状态失败');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '切换状态失败');
         showToast(!repaid ? '已标记为已还款' : '已标记为未还款');
-        await loadCards();
+        const target = allItems.find(item => item.cardId === cardId);
+        if (target) target.repaid = !repaid ? 1 : 0;
+        applyFilters();
       } catch (err) {
         showToast(err.message || '操作失败');
       }
     }
 
+    function renderBankCell(card) {
+      const icon = card.bankIconUrl
+        ? '<img class="bank-icon" src="' + escapeHtml(card.bankIconUrl) + '" alt="' + escapeHtml(card.bankName) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\'">' +
+          '<span class="bank-fallback" style="display:none">' + escapeHtml(getBankInitial(card.bankName)) + '</span>'
+        : '<span class="bank-fallback">' + escapeHtml(getBankInitial(card.bankName)) + '</span>';
+
+      return '<div class="bank-cell">' + icon + '<div><div class="bank-name">' + escapeHtml(card.bankName) + '</div></div></div>';
+    }
+
+    function renderCardCell(card) {
+      return '<div class="card-main"><div><div class="card-title">' + escapeHtml(card.cardName || '未命名卡片') + '</div><div class="code">尾号 ' + escapeHtml(String(card.cardNumber).slice(-4)) + '</div></div></div>';
+    }
+
+    function renderDateCell(card) {
+      const desc = card.daysToRepayment < 0
+        ? '已过 ' + Math.abs(card.daysToRepayment) + ' 天'
+        : card.daysToRepayment === 0
+          ? '今天'
+          : card.daysToRepayment + ' 天后';
+      return '<div><div>' + escapeHtml(card.repaymentDateText) + '</div><div class="subtext">' + escapeHtml(desc) + '</div></div>';
+    }
+
     function renderTable(items) {
       if (!items.length) {
-        contentEl.innerHTML = '<div class="empty">暂无信用卡数据</div>';
+        contentEl.innerHTML = '<div class="empty">没有匹配的卡片，换个筛选条件试试。</div>';
         return;
       }
 
       const rows = items.map((card) => {
         return [
           '<tr>',
-          '<td data-label="银行">' + card.bankName + '</td>',
-          '<td data-label="卡片"><span class="code">尾号 ' + String(card.cardNumber).slice(-4) + '</span> ' + card.cardName + '</td>',
-          '<td data-label="账单日">' + card.billingDay + '</td>',
-          '<td data-label="还款日">' + card.repaymentDateText + '</td>',
-          '<td data-label="免息期">' + card.gracePeriod + ' 天</td>',
-          '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + getStatusText(card) + '</button></td>',
+          '<td data-label="银行">' + renderBankCell(card) + '</td>',
+          '<td data-label="卡片">' + renderCardCell(card) + '</td>',
+          '<td data-label="账单日"><strong>' + card.billingDay + '</strong><div class="subtext">每月固定</div></td>',
+          '<td data-label="还款日">' + renderDateCell(card) + '</td>',
+          '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong><div class="subtext">当前最长</div></div></td>',
+          '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></td>',
           '</tr>'
         ].join('');
       }).join('');
 
+      const sortLabelMap = {
+        daysToRepaymentAsc: '按到期时间',
+        billingDayAsc: '按账单日',
+        bankNameAsc: '按银行名'
+      };
+
       contentEl.innerHTML = [
+        '<div class="helper-row" style="padding:16px 16px 0;">',
+        '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[sortBy.value] + '</span></div>',
+        '</div>',
         '<table>',
         '<thead><tr><th>银行</th><th>卡片</th><th>账单日</th><th>还款日</th><th>免息期</th><th>状态</th></tr></thead>',
         '<tbody>' + rows + '</tbody>',
@@ -191,24 +652,44 @@ export function renderDashboard() {
         btn.addEventListener('click', async () => {
           btn.disabled = true;
           await toggleRepaid(Number(btn.dataset.cardId), btn.dataset.repaid === 'true' || btn.dataset.repaid === '1');
+          btn.disabled = false;
         });
       });
     }
 
-    async function loadCards() {
-      loadingEl.style.display = 'block';
-      contentEl.innerHTML = '';
+    async function loadCards(showLoading = true) {
+      if (showLoading) {
+        loadingEl.style.display = 'block';
+        contentEl.innerHTML = '';
+      }
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '刷新中...';
       try {
-        const res = await fetch('/api/cards');
+        const res = await fetch('/api/cards', { headers: { 'Accept': 'application/json' } });
         if (!res.ok) throw new Error('加载卡片失败');
         const data = await res.json();
-        renderTable(data.items || []);
+        allItems = Array.isArray(data.items) ? data.items : [];
+        lastMeta = data.meta || null;
+        fillBankFilter(allItems);
+        updateSummary(allItems);
+        lastUpdatedChip.textContent = '🕒 更新于 ' + formatLocalDate(lastMeta && lastMeta.generatedAt ? lastMeta.generatedAt : new Date().toISOString());
+        applyFilters();
       } catch (err) {
-        contentEl.innerHTML = '<div class="empty">' + (err.message || '加载失败') + '</div>';
+        contentEl.innerHTML = '<div class="empty">' + escapeHtml(err.message || '加载失败') + '</div>';
+        resultHint.textContent = '加载失败';
       } finally {
         loadingEl.style.display = 'none';
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '刷新数据';
       }
     }
+
+    [searchInput, statusFilter, bankFilter, sortBy].forEach((el) => {
+      el.addEventListener('input', applyFilters);
+      el.addEventListener('change', applyFilters);
+    });
+
+    refreshBtn.addEventListener('click', () => loadCards(false));
 
     loadCards();
   </script>
