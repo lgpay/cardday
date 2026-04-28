@@ -743,7 +743,7 @@ export function renderDashboard() {
         <div class="modal-section">
           <h3 class="section-title">补充状态</h3>
           <div class="switch-row">
-            <label><input id="isNextPeriodInput" type="checkbox" /> 下个账期生效</label>
+            <label><input id="isNextPeriodInput" type="checkbox" /> 本月消费计入下期账单</label>
             <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
           </div>
         </div>
@@ -1128,7 +1128,7 @@ export function renderDashboard() {
           ? '<img class="bank-icon" src="' + escapeHtml(bank.bank_icon_url) + '" alt="' + escapeHtml(bank.bank_name) + '" loading="lazy" referrerpolicy="no-referrer">'
           : '<span class="bank-fallback">' + escapeHtml(getBankInitial(bank.bank_name)) + '</span>';
         return '<div class="bank-item">'
-          + '<div class="bank-meta">' + icon + '<div><div class="bank-name">' + escapeHtml(bank.bank_name) + '</div><div class="subtext">ID: ' + bank.bank_id + '</div></div></div>'
+          + '<div class="bank-meta">' + icon + '<div><div class="bank-name">' + escapeHtml(bank.bank_name) + '</div></div></div>'
           + '<div class="table-actions">'
           + '<button class="mini-btn js-edit-bank" data-bank-id="' + bank.bank_id + '" type="button">编辑</button>'
           + '<button class="mini-btn danger-text js-delete-bank" data-bank-id="' + bank.bank_id + '" data-bank-name="' + escapeHtml(bank.bank_name) + '" type="button">删除</button>'
