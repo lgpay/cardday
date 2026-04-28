@@ -8,4 +8,4 @@ crons = ["0 0 * * *", "0 9 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "cardday-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "ef783458-14f2-4c72-8dde-9f0314b85667"
