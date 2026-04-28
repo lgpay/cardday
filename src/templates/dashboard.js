@@ -1122,10 +1122,6 @@ export function renderDashboard() {
         setError(billingDayInput, billingDayError, '账单日需在 1-28 之间');
         ok = false;
       }
-      if (cardNumberInput.value && !/^\d{1,16}$/.test(cardNumberInput.value)) {
-        setError(cardNumberInput, cardNumberError, '尾号只能是 1-16 位数字');
-        ok = false;
-      }
       if (ruleTypeSelect.value === 'graceDays') {
         if (!graceDaysInput.value || Number(graceDaysInput.value) < 1 || Number(graceDaysInput.value) > 99) {
           setError(graceDaysInput, graceDaysError, '账单后天数需在 1-99 之间');
@@ -1398,6 +1394,7 @@ export function renderDashboard() {
 
     async function saveCard() {
       sanitizeDigitsInput(cardNumberInput, 16);
+      clearError(cardNumberInput, cardNumberError);
       sanitizeDigitsInput(billingDayInput, 2);
       sanitizeDigitsInput(repaymentDayInput, 2);
       sanitizeDigitsInput(graceDaysInput, 2);
