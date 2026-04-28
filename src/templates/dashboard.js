@@ -199,6 +199,33 @@ export function renderDashboard() {
       margin-top: 14px;
     }
 
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      background: #f8fafc;
+    }
+
+    .mini-btn.danger-text {
+      color: #b91c1c;
+      border-color: #fecaca;
+      background: #fff5f5;
+    }
+
     .field,
     .button {
       width: 100%;
@@ -610,6 +637,7 @@ export function renderDashboard() {
     let lastMeta = null;
     let currentSort = 'daysToRepaymentAsc';
     let banksCache = [];
+    let editingCardId = null;
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -754,6 +782,9 @@ export function renderDashboard() {
     }
 
     function resetCardForm() {
+      editingCardId = null;
+      newCardBtn.textContent = '新增卡片';
+      saveCardBtn.textContent = '保存卡片';
       cardNameInput.value = '';
       bankSelect.value = '';
       cardNumberInput.value = '';
@@ -764,6 +795,34 @@ export function renderDashboard() {
       isNextPeriodInput.checked = false;
       repaidInput.checked = false;
       updateRuleInputs();
+    }
+
+    function openCreateForm() {
+      editingCardId = null;
+      newCardBtn.textContent = '新增卡片';
+      saveCardBtn.textContent = '保存卡片';
+      formPanel.classList.add('show');
+      cardNameInput.focus();
+    }
+
+    function openEditForm(card) {
+      editingCardId = card.cardId;
+      newCardBtn.textContent = '编辑中';
+      saveCardBtn.textContent = '保存修改';
+      formPanel.classList.add('show');
+      cardNameInput.value = card.cardName || '';
+      const bank = banksCache.find(item => item.bank_name === card.bankName);
+      bankSelect.value = bank ? String(bank.bank_id) : '';
+      cardNumberInput.value = card.cardNumber || '';
+      billingDayInput.value = card.billingDay || '';
+      const useGraceDays = card.rawGraceType === 1 || card.rawGraceType === '1' || card.rawGraceType === true;
+      ruleTypeSelect.value = useGraceDays ? 'graceDays' : 'repaymentDay';
+      repaymentDayInput.value = card.rawRepaymentDay || '';
+      graceDaysInput.value = card.rawGraceDays || '';
+      isNextPeriodInput.checked = !!card.rawIsNextPeriod;
+      repaidInput.checked = !!card.repaid;
+      updateRuleInputs();
+      cardNameInput.focus();
     }
 
     async function loadBanks() {
@@ -787,16 +846,16 @@ export function renderDashboard() {
       };
 
       saveCardBtn.disabled = true;
-      saveCardBtn.textContent = '保存中...';
+      saveCardBtn.textContent = editingCardId ? '保存中...' : '保存中...';
       try {
-        const res = await fetch('/api/cards', {
-          method: 'POST',
+        const res = await fetch(editingCardId ? ('/api/cards/' + editingCardId) : '/api/cards', {
+          method: editingCardId ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || '保存失败');
-        showToast('卡片已新增');
+        showToast(editingCardId ? '卡片已更新' : '卡片已新增');
         formPanel.classList.remove('show');
         resetCardForm();
         await loadCards(false);
@@ -804,7 +863,25 @@ export function renderDashboard() {
         showToast(err.message || '保存失败');
       } finally {
         saveCardBtn.disabled = false;
-        saveCardBtn.textContent = '保存卡片';
+        saveCardBtn.textContent = editingCardId ? '保存修改' : '保存卡片';
+      }
+    }
+
+    async function removeCard(cardId, cardName) {
+      const ok = confirm('确认删除「' + (cardName || '这张卡') + '」？此操作不可恢复。');
+      if (!ok) return;
+      try {
+        const res = await fetch('/api/cards/' + cardId, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '删除失败');
+        showToast('卡片已删除');
+        if (editingCardId === cardId) {
+          formPanel.classList.remove('show');
+          resetCardForm();
+        }
+        await loadCards(false);
+      } catch (err) {
+        showToast(err.message || '删除失败');
       }
     }
 
@@ -870,6 +947,13 @@ export function renderDashboard() {
       return '<div><div>' + escapeHtml(card.repaymentDateText) + '</div></div>';
     }
 
+    function renderActionCell(card) {
+      return '<div class="table-actions">'
+        + '<button class="mini-btn js-edit-card" data-card-id="' + card.cardId + '" type="button">编辑</button>'
+        + '<button class="mini-btn danger-text js-delete-card" data-card-id="' + card.cardId + '" data-card-name="' + escapeHtml(card.cardName || '') + '" type="button">删除</button>'
+        + '</div>';
+    }
+
     function renderTable(items) {
       if (!items.length) {
         contentEl.innerHTML = '<div class="empty">没有匹配的卡片，换个筛选条件试试。</div>';
@@ -886,6 +970,7 @@ export function renderDashboard() {
           '<td data-label="还款日">' + renderDateCell(card) + '</td>',
           '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong></div></td>',
           '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></td>',
+          '<td data-label="操作">' + renderActionCell(card) + '</td>',
           '</tr>'
         ].join('');
       }).join('');
@@ -900,6 +985,7 @@ export function renderDashboard() {
         '<th class="sortable-th" data-sort-field="daysToRepayment"><span class="sort-label">还款日 <span class="sort-arrow">' + getSortArrow('daysToRepayment') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="gracePeriod"><span class="sort-label">免息期 <span class="sort-arrow">' + getSortArrow('gracePeriod') + '</span></span></th>' +
         '<th>状态</th>' +
+        '<th>操作</th>' +
         '</tr></thead>',
         '<tbody>' + rows + '</tbody>',
         '</table>'
@@ -921,6 +1007,23 @@ export function renderDashboard() {
           btn.disabled = true;
           await toggleRepaid(Number(btn.dataset.cardId), btn.dataset.repaid === 'true' || btn.dataset.repaid === '1');
           btn.disabled = false;
+        });
+      });
+
+      contentEl.querySelectorAll('.js-edit-card').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!banksCache.length) {
+            try { await loadBanks() } catch (err) { showToast(err.message || '加载银行失败'); return }
+          }
+          const card = allItems.find(item => item.cardId === Number(btn.dataset.cardId));
+          if (!card) return;
+          openEditForm(card);
+        });
+      });
+
+      contentEl.querySelectorAll('.js-delete-card').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          removeCard(Number(btn.dataset.cardId), btn.dataset.cardName || '');
         });
       });
     }
@@ -974,10 +1077,13 @@ export function renderDashboard() {
           return;
         }
       }
-      formPanel.classList.toggle('show');
-      if (formPanel.classList.contains('show')) {
-        cardNameInput.focus();
+      if (formPanel.classList.contains('show') && editingCardId === null) {
+        formPanel.classList.remove('show');
+        resetCardForm();
+        return;
       }
+      resetCardForm();
+      openCreateForm();
     });
     cancelCardBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');

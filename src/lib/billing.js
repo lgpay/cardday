@@ -71,7 +71,12 @@ export function buildCardViewModels(cards, currentDate = new Date()) {
       repaymentDateText: format(repaymentDate),
       gracePeriod,
       repaid: card.repaid,
-      daysToRepayment
+      daysToRepayment,
+      rawIsNextPeriod: card.is_next_period,
+      rawGraceType: Number(card.grace_type),
+      rawGraceDays: card.grace_days,
+      rawRepaymentDay: card.repayment_day,
+      rawBankId: card.bank_id
     }
   })
 }
