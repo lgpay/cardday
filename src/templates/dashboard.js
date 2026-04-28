@@ -642,7 +642,7 @@ export function renderDashboard() {
       if (!card.cardNumberLast4) {
         return '<span class="subtext">未填写</span>';
       }
-      return '<span class="code">尾号 ' + escapeHtml(card.cardNumberLast4) + '</span>';
+      return '<span class="code">' + escapeHtml(card.cardNumberLast4) + '</span>';
     }
 
     function renderDateCell(card) {
