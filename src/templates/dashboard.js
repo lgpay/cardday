@@ -351,13 +351,13 @@ export function renderDashboard() {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 10px;
+      padding: 4px 8px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.9);
-      color: var(--muted);
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #94a3b8;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 500;
     }
 
     .empty, .loading {
@@ -690,8 +690,8 @@ export function renderDashboard() {
       };
 
       contentEl.innerHTML = [
-        '<div class="helper-row" style="padding:16px 16px 0;">',
-        '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[currentSort] + '</span></div>',
+        '<div class="helper-row" style="padding:12px 16px 0;">',
+        '  <div class="pill-row"><span class="sort-chip">排序：' + sortLabelMap[currentSort] + '</span></div>',
         '</div>',
         '<table>',
         '<thead><tr>' +
