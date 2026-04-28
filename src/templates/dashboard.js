@@ -838,19 +838,19 @@ export function renderDashboard() {
           <h3 class="section-title">企业微信通道配置</h3>
           <div class="config-grid">
             <div class="field-group">
-              <label for="qywxCorpIdInput">CORP_ID</label>
-              <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业 ID" />
+              <label for="qywxCorpIdInput">企业 ID</label>
+              <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
             </div>
             <div class="field-group">
-              <label for="qywxAgentIdInput">AGENT_ID</label>
-              <input id="qywxAgentIdInput" class="field" type="text" placeholder="应用 AgentId" />
+              <label for="qywxAgentIdInput">应用 AgentId</label>
+              <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
             </div>
             <div class="field-group full">
-              <label for="qywxToUserInput">TO_USER</label>
-              <input id="qywxToUserInput" class="field" type="text" placeholder="接收成员，如 ZhangSan 或 @all" />
+              <label for="qywxToUserInput">接收对象</label>
+              <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
             </div>
             <div class="field-group full">
-              <label for="qywxCorpSecretInput">CORP_SECRET（留空表示不修改）</label>
+              <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
               <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
             </div>
           </div>
@@ -1248,10 +1248,10 @@ export function renderDashboard() {
 
     function renderReminderEnvStatus(status) {
       const items = [
-        ['CORP_ID', status && status.corpIdConfigured],
-        ['CORP_SECRET', status && status.corpSecretConfigured],
-        ['AGENT_ID', status && status.agentIdConfigured],
-        ['TO_USER', status && status.toUserConfigured],
+        ['企业 ID', status && status.corpIdConfigured],
+        ['应用 Secret', status && status.corpSecretConfigured],
+        ['应用 AgentId', status && status.agentIdConfigured],
+        ['接收对象', status && status.toUserConfigured],
         ['代理地址', status && status.proxyUrlConfigured],
         ['代理 Token', status && status.proxyTokenConfigured]
       ];
