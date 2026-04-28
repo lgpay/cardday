@@ -869,7 +869,7 @@ export function renderDashboard() {
               <input id="qywxProxyTokenInput" class="field" type="password" placeholder="如果代理需要 Bearer Token，就填这里" />
             </div>
           </div>
-          <div class="status-note">配置代理后，提醒消息会优先发到你的代理，再由代理服务器去请求企业微信。适合企业微信启用了可信 IP 白名单的场景。代理 Token 可留空，只有你的代理要求鉴权时才需要填写。</div>
+          <div class="status-note">如果这里填的是一个 Nginx 反向代理企业微信官方域名的地址（例如把 <code>https://qyapi.weixin.qq.com</code> 代理出来），系统会自动按企业微信原生接口路径请求它。代理 Token 可留空，只有你的代理额外做了鉴权时才需要填写。</div>
         </div>
 
         <div class="modal-section">

@@ -13,34 +13,48 @@ function getQywxConfig(env, settings = null) {
   }
 }
 
+function joinProxyUrl(baseUrl, path) {
+  const base = String(baseUrl || '').replace(/\/+$/, '')
+  const suffix = String(path || '').replace(/^\/+/, '')
+  return `${base}/${suffix}`
+}
+
 export async function sendQYWXMessage(env, message, settings = null) {
   const config = getQywxConfig(env, settings)
 
   if (config.proxyUrl) {
-    if (!config.proxyUrl) {
-      throw new Error('代理地址未配置')
+    if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
+      throw new Error('代理模式下仍需填写企业微信参数')
     }
+
     const proxyHeaders = { 'Content-Type': 'application/json' }
     if (config.proxyToken) {
       proxyHeaders.Authorization = `Bearer ${config.proxyToken}`
     }
 
-    const proxyRes = await fetch(config.proxyUrl, {
+    const tokenUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/gettoken') + `?corpid=${encodeURIComponent(config.corpId)}&corpsecret=${encodeURIComponent(config.corpSecret)}`
+    const tokenRes = await fetch(tokenUrl, { headers: proxyHeaders })
+    const tokenData = await tokenRes.json().catch(() => ({}))
+    if (!tokenRes.ok || !tokenData.access_token) {
+      throw new Error(tokenData.errmsg || `代理获取 access_token 失败（HTTP ${tokenRes.status}）`)
+    }
+
+    const sendUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/message/send') + `?access_token=${encodeURIComponent(tokenData.access_token)}`
+    const messageData = {
+      touser: config.toUser,
+      msgtype: 'text',
+      agentid: config.agentId,
+      text: { content: message }
+    }
+
+    const sendRes = await fetch(sendUrl, {
       method: 'POST',
       headers: proxyHeaders,
-      body: JSON.stringify({
-        provider: 'qywx',
-        corpId: config.corpId,
-        corpSecret: config.corpSecret,
-        agentId: config.agentId,
-        toUser: config.toUser,
-        message
-      })
+      body: JSON.stringify(messageData)
     })
-
-    const proxyData = await proxyRes.json().catch(() => ({}))
-    if (!proxyRes.ok || (proxyData && proxyData.success === false)) {
-      throw new Error(proxyData.error || proxyData.message || `代理发送失败（HTTP ${proxyRes.status}）`)
+    const sendData = await sendRes.json().catch(() => ({}))
+    if (!sendRes.ok || (sendData.errcode && sendData.errcode !== 0)) {
+      throw new Error(sendData.errmsg || `代理发送失败（HTTP ${sendRes.status}）`)
     }
     return
   }
