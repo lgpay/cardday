@@ -29,3 +29,5 @@ INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_co
 INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_agent_id', '');
 INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_to_user', '');
 INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_corp_secret', '');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_proxy_url', '');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('qywx_proxy_token', '');

@@ -73,7 +73,9 @@ export async function getAppSettings(env) {
     qywxCorpId: String(map.qywx_corp_id || ''),
     qywxAgentId: String(map.qywx_agent_id || ''),
     qywxToUser: String(map.qywx_to_user || ''),
-    qywxCorpSecretConfigured: !!String(map.qywx_corp_secret || '')
+    qywxCorpSecretConfigured: !!String(map.qywx_corp_secret || ''),
+    qywxProxyUrl: String(map.qywx_proxy_url || ''),
+    qywxProxyTokenConfigured: !!String(map.qywx_proxy_token || '')
   }
 }
 
@@ -89,8 +91,12 @@ export async function updateReminderSettings(env, input) {
   await upsertAppSetting(env, 'qywx_corp_id', input.qywxCorpId || '')
   await upsertAppSetting(env, 'qywx_agent_id', input.qywxAgentId || '')
   await upsertAppSetting(env, 'qywx_to_user', input.qywxToUser || '')
+  await upsertAppSetting(env, 'qywx_proxy_url', input.qywxProxyUrl || '')
   if (input.qywxCorpSecret !== undefined && input.qywxCorpSecret !== null && input.qywxCorpSecret !== '') {
     await upsertAppSetting(env, 'qywx_corp_secret', input.qywxCorpSecret)
+  }
+  if (input.qywxProxyToken !== undefined && input.qywxProxyToken !== null && input.qywxProxyToken !== '') {
+    await upsertAppSetting(env, 'qywx_proxy_token', input.qywxProxyToken)
   }
   return getAppSettings(env)
 }

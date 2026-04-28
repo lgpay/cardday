@@ -858,6 +858,21 @@ export function renderDashboard() {
         </div>
 
         <div class="modal-section">
+          <h3 class="section-title">API 代理配置</h3>
+          <div class="config-grid">
+            <div class="field-group full">
+              <label for="qywxProxyUrlInput">代理地址</label>
+              <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://your-proxy.example.com/qywx/send" />
+            </div>
+            <div class="field-group full">
+              <label for="qywxProxyTokenInput">代理 Token（留空表示不修改）</label>
+              <input id="qywxProxyTokenInput" class="field" type="password" placeholder="如果代理需要 Bearer Token，就填这里" />
+            </div>
+          </div>
+          <div class="status-note">配置代理后，提醒消息会优先发到你的代理，再由代理服务器去请求企业微信。适合企业微信启用了可信 IP 白名单的场景。</div>
+        </div>
+
+        <div class="modal-section">
           <h3 class="section-title">企业微信发送状态</h3>
           <div id="reminderEnvStatus" class="status-stack"></div>
           <div class="status-note">这里只展示 Worker 环境变量是否已配置，具体密钥不会在页面显示。</div>
@@ -945,6 +960,8 @@ export function renderDashboard() {
     const qywxAgentIdInput = document.getElementById('qywxAgentIdInput');
     const qywxToUserInput = document.getElementById('qywxToUserInput');
     const qywxCorpSecretInput = document.getElementById('qywxCorpSecretInput');
+    const qywxProxyUrlInput = document.getElementById('qywxProxyUrlInput');
+    const qywxProxyTokenInput = document.getElementById('qywxProxyTokenInput');
     const reminderEnvStatus = document.getElementById('reminderEnvStatus');
     const cancelReminderBtn = document.getElementById('cancelReminderBtn');
     const testReminderBtn = document.getElementById('testReminderBtn');
@@ -1234,7 +1251,9 @@ export function renderDashboard() {
         ['CORP_ID', status && status.corpIdConfigured],
         ['CORP_SECRET', status && status.corpSecretConfigured],
         ['AGENT_ID', status && status.agentIdConfigured],
-        ['TO_USER', status && status.toUserConfigured]
+        ['TO_USER', status && status.toUserConfigured],
+        ['代理地址', status && status.proxyUrlConfigured],
+        ['代理 Token', status && status.proxyTokenConfigured]
       ];
       reminderEnvStatus.innerHTML = items.map(([label, ok]) => {
         const badge = ok ? '<span class="badge ok">已配置</span>' : '<span class="badge danger">未配置</span>';
@@ -1250,6 +1269,8 @@ export function renderDashboard() {
       qywxAgentIdInput.value = item && item.qywxAgentId ? item.qywxAgentId : '';
       qywxToUserInput.value = item && item.qywxToUser ? item.qywxToUser : '';
       qywxCorpSecretInput.value = '';
+      qywxProxyUrlInput.value = item && item.qywxProxyUrl ? item.qywxProxyUrl : '';
+      qywxProxyTokenInput.value = '';
       renderReminderEnvStatus(item && item.envStatus ? item.envStatus : null);
     }
 
@@ -1395,7 +1416,9 @@ export function renderDashboard() {
             qywxCorpId: qywxCorpIdInput.value.trim(),
             qywxAgentId: qywxAgentIdInput.value.trim(),
             qywxToUser: qywxToUserInput.value.trim(),
-            qywxCorpSecret: qywxCorpSecretInput.value.trim()
+            qywxCorpSecret: qywxCorpSecretInput.value.trim(),
+            qywxProxyUrl: qywxProxyUrlInput.value.trim(),
+            qywxProxyToken: qywxProxyTokenInput.value.trim()
           })
         });
         const data = await res.json().catch(() => ({}));

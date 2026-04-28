@@ -97,9 +97,15 @@ function normalizeReminderPayload(payload = {}) {
   const qywxAgentId = String(payload.qywxAgentId || '').trim()
   const qywxToUser = String(payload.qywxToUser || '').trim()
   const qywxCorpSecret = payload.qywxCorpSecret == null ? '' : String(payload.qywxCorpSecret).trim()
+  const qywxProxyUrl = String(payload.qywxProxyUrl || '').trim()
+  const qywxProxyToken = payload.qywxProxyToken == null ? '' : String(payload.qywxProxyToken).trim()
 
   if (!Number.isInteger(reminderThreshold) || reminderThreshold < 0 || reminderThreshold > 30) {
     throw new Error('reminderThreshold 需在 0-30 之间')
+  }
+
+  if (qywxProxyUrl && !(qywxProxyUrl.startsWith('http://') || qywxProxyUrl.startsWith('https://'))) {
+    throw new Error('qywxProxyUrl 需为 http/https 地址')
   }
 
   return {
@@ -108,7 +114,9 @@ function normalizeReminderPayload(payload = {}) {
     qywxCorpId,
     qywxAgentId,
     qywxToUser,
-    qywxCorpSecret
+    qywxCorpSecret,
+    qywxProxyUrl,
+    qywxProxyToken
   }
 }
 
@@ -225,7 +233,9 @@ async function handleReminderSettingsApi(env) {
         corpIdConfigured: !!settings.qywxCorpId || !!env.CORP_ID,
         corpSecretConfigured: !!settings.qywxCorpSecretConfigured || !!env.CORP_SECRET,
         agentIdConfigured: !!settings.qywxAgentId || !!env.AGENT_ID,
-        toUserConfigured: !!settings.qywxToUser || !!env.TO_USER
+        toUserConfigured: !!settings.qywxToUser || !!env.TO_USER,
+        proxyUrlConfigured: !!settings.qywxProxyUrl,
+        proxyTokenConfigured: !!settings.qywxProxyTokenConfigured
       }
     }
   })

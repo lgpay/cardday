@@ -7,7 +7,9 @@ function getQywxConfig(env, settings = null) {
     corpId: String((settings && settings.qywxCorpId) || env.CORP_ID || '').trim(),
     corpSecret: String((settings && settings.qywxCorpSecret) || env.CORP_SECRET || '').trim(),
     agentId: String((settings && settings.qywxAgentId) || env.AGENT_ID || '').trim(),
-    toUser: String((settings && settings.qywxToUser) || env.TO_USER || '').trim()
+    toUser: String((settings && settings.qywxToUser) || env.TO_USER || '').trim(),
+    proxyUrl: String((settings && settings.qywxProxyUrl) || '').trim(),
+    proxyToken: String((settings && settings.qywxProxyToken) || '').trim()
   }
 }
 
@@ -15,6 +17,32 @@ export async function sendQYWXMessage(env, message, settings = null) {
   const config = getQywxConfig(env, settings)
   if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
     throw new Error('企业微信通道参数未配置完整')
+  }
+
+  if (config.proxyUrl) {
+    const proxyHeaders = { 'Content-Type': 'application/json' }
+    if (config.proxyToken) {
+      proxyHeaders.Authorization = `Bearer ${config.proxyToken}`
+    }
+
+    const proxyRes = await fetch(config.proxyUrl, {
+      method: 'POST',
+      headers: proxyHeaders,
+      body: JSON.stringify({
+        provider: 'qywx',
+        corpId: config.corpId,
+        corpSecret: config.corpSecret,
+        agentId: config.agentId,
+        toUser: config.toUser,
+        message
+      })
+    })
+
+    const proxyData = await proxyRes.json().catch(() => ({}))
+    if (!proxyRes.ok || (proxyData && proxyData.success === false)) {
+      throw new Error(proxyData.error || proxyData.message || `代理发送失败（HTTP ${proxyRes.status}）`)
+    }
+    return
   }
 
   const tokenUrl = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpId}&corpsecret=${config.corpSecret}`
