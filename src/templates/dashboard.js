@@ -601,7 +601,7 @@ export function renderDashboard() {
     }
 
     function renderCardCell(card) {
-      return '<div class="card-main"><div><div class="card-title">' + escapeHtml(card.cardName || '未命名卡片') + '</div><div class="subtext">卡片名称</div></div></div>';
+      return '<div class="card-main"><div><div class="card-title">' + escapeHtml(card.cardName || '未命名卡片') + '</div></div></div>';
     }
 
     function renderCardNumberCell(card) {
@@ -612,12 +612,7 @@ export function renderDashboard() {
     }
 
     function renderDateCell(card) {
-      const desc = card.daysToRepayment < 0
-        ? '已过 ' + Math.abs(card.daysToRepayment) + ' 天'
-        : card.daysToRepayment === 0
-          ? '今天'
-          : card.daysToRepayment + ' 天后';
-      return '<div><div>' + escapeHtml(card.repaymentDateText) + '</div><div class="subtext">' + escapeHtml(desc) + '</div></div>';
+      return '<div><div>' + escapeHtml(card.repaymentDateText) + '</div></div>';
     }
 
     function renderTable(items) {
@@ -632,9 +627,9 @@ export function renderDashboard() {
           '<td data-label="银行">' + renderBankCell(card) + '</td>',
           '<td data-label="卡片名称">' + renderCardCell(card) + '</td>',
           '<td data-label="尾号">' + renderCardNumberCell(card) + '</td>',
-          '<td data-label="账单日"><strong>' + card.billingDay + '</strong><div class="subtext">每月固定</div></td>',
+          '<td data-label="账单日"><strong>' + card.billingDay + '</strong></td>',
           '<td data-label="还款日">' + renderDateCell(card) + '</td>',
-          '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong><div class="subtext">当前最长</div></div></td>',
+          '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong></div></td>',
           '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></td>',
           '</tr>'
         ].join('');
