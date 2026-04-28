@@ -161,6 +161,77 @@ export function renderDashboard() {
       border-top: 1px solid var(--border);
     }
 
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.38);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 30;
+    }
+
+    .modal-shell.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(920px, 100%);
+      max-height: min(88vh, 920px);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .modal-desc {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .icon-btn:hover {
+      background: #f8fafc;
+    }
+
+    .modal-body > .form-panel,
+    .modal-body > .bank-panel {
+      display: block;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
     .form-panel.show,
     .bank-panel.show {
       display: block;
@@ -681,6 +752,20 @@ export function renderDashboard() {
       <div id="content"></div>
     </section>
   </div>
+
+  <div id="modalShell" class="modal-shell" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalTitle" class="modal-title">编辑</h2>
+          <p id="modalDesc" class="modal-desc">在这里集中完成录入和修改。</p>
+        </div>
+        <button id="closeModalBtn" class="icon-btn" type="button" aria-label="关闭">×</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script>
@@ -697,6 +782,11 @@ export function renderDashboard() {
     const summaryGrid = document.getElementById('summaryGrid');
     const formPanel = document.getElementById('formPanel');
     const bankPanel = document.getElementById('bankPanel');
+    const modalShell = document.getElementById('modalShell');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc = document.getElementById('modalDesc');
+    const closeModalBtn = document.getElementById('closeModalBtn');
     const bankSelect = document.getElementById('bankSelect');
     const cardNameInput = document.getElementById('cardNameInput');
     const cardNumberInput = document.getElementById('cardNumberInput');
@@ -737,6 +827,21 @@ export function renderDashboard() {
       toastEl.classList.add('show');
       clearTimeout(window.__toastTimer);
       window.__toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+    }
+
+    function openModal(title, desc, panelEl) {
+      modalTitle.textContent = title;
+      modalDesc.textContent = desc;
+      modalBody.appendChild(panelEl);
+      modalShell.classList.add('show');
+      modalShell.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modalShell.classList.remove('show');
+      modalShell.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
 
     function escapeHtml(value) {
@@ -1030,6 +1135,7 @@ export function renderDashboard() {
       newCardBtn.textContent = '新增卡片';
       saveCardBtn.textContent = '保存卡片';
       formPanel.classList.add('show');
+      openModal('新增卡片', '集中填写卡片基础信息和还款规则。', formPanel);
       cardNameInput.focus();
     }
 
@@ -1038,6 +1144,7 @@ export function renderDashboard() {
       newCardBtn.textContent = '编辑中';
       saveCardBtn.textContent = '保存修改';
       formPanel.classList.add('show');
+      openModal('编辑卡片', '修改卡片基础信息、账单日和还款规则。', formPanel);
       cardNameInput.value = card.cardName || '';
       const bank = banksCache.find(item => item.bank_name === card.bankName);
       bankSelect.value = bank ? String(bank.bank_id) : '';
@@ -1083,6 +1190,7 @@ export function renderDashboard() {
         resetBankForm();
         await loadBanks();
         await loadCards(false);
+        closeModal();
       } catch (err) {
         showToast(err.message || '保存失败');
       } finally {
@@ -1128,6 +1236,7 @@ export function renderDashboard() {
         formPanel.classList.remove('show');
         resetCardForm();
         await loadCards(false);
+        closeModal();
       } catch (err) {
         showToast(err.message || '保存失败');
       } finally {
@@ -1364,12 +1473,10 @@ export function renderDashboard() {
       }
       formPanel.classList.remove('show');
       resetCardForm();
-      bankPanel.classList.toggle('show');
-      if (!bankPanel.classList.contains('show')) {
-        resetBankForm();
-      } else {
-        bankNameInput.focus();
-      }
+      bankPanel.classList.add('show');
+      resetBankForm();
+      openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
+      bankNameInput.focus();
     });
 
     newCardBtn.addEventListener('click', async () => {
@@ -1383,25 +1490,42 @@ export function renderDashboard() {
       }
       bankPanel.classList.remove('show');
       resetBankForm();
-      if (formPanel.classList.contains('show') && editingCardId === null) {
-        formPanel.classList.remove('show');
-        resetCardForm();
-        return;
-      }
       resetCardForm();
       openCreateForm();
     });
     cancelBankBtn.addEventListener('click', () => {
       bankPanel.classList.remove('show');
       resetBankForm();
+      closeModal();
     });
     saveBankBtn.addEventListener('click', saveBank);
 
     cancelCardBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');
       resetCardForm();
+      closeModal();
     });
     saveCardBtn.addEventListener('click', saveCard);
+
+    closeModalBtn.addEventListener('click', () => {
+      formPanel.classList.remove('show');
+      bankPanel.classList.remove('show');
+      resetCardForm();
+      resetBankForm();
+      closeModal();
+    });
+
+    modalShell.addEventListener('click', (event) => {
+      if (event.target === modalShell) {
+        closeModalBtn.click();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modalShell.classList.contains('show')) {
+        closeModalBtn.click();
+      }
+    });
 
     refreshBtn.addEventListener('click', () => loadCards(false));
 
