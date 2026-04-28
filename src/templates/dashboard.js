@@ -188,6 +188,20 @@ export function renderDashboard() {
       padding: 20px;
     }
 
+    .modal-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #334155;
+      letter-spacing: 0.01em;
+    }
+
     .modal-header {
       display: flex;
       align-items: flex-start;
@@ -675,51 +689,65 @@ export function renderDashboard() {
       </div>
 
       <div id="formPanel" class="form-panel">
-        <div class="form-grid">
-          <div class="field-group full">
-            <label for="cardNameInput">卡片名称</label>
-            <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
-            <div id="cardNameError" class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="bankSelect">银行</label>
-            <select id="bankSelect" class="field"><option value="">选择银行</option></select>
-            <div id="bankSelectError" class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="cardNumberInput">尾号（非必填）</label>
-            <input id="cardNumberInput" class="field" type="text" placeholder="如 8203" maxlength="16" inputmode="numeric" />
-            <div id="cardNumberError" class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="billingDayInput">账单日</label>
-            <input id="billingDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
-            <div id="billingDayError" class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="ruleTypeSelect">还款规则</label>
-            <select id="ruleTypeSelect" class="field">
-              <option value="repaymentDay">固定还款日</option>
-              <option value="graceDays">账单日后 N 天</option>
-            </select>
-            <div class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="repaymentDayInput">还款日</label>
-            <input id="repaymentDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
-            <div id="repaymentDayError" class="field-error"></div>
-          </div>
-          <div class="field-group">
-            <label for="graceDaysInput">账单后天数</label>
-            <input id="graceDaysInput" class="field" type="number" min="1" max="99" placeholder="如 20" disabled />
-            <div id="graceDaysError" class="field-error"></div>
+        <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="section-title">基础信息</h3>
+          <div class="form-grid">
+            <div class="field-group full">
+              <label for="cardNameInput">卡片名称</label>
+              <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
+              <div id="cardNameError" class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="bankSelect">银行</label>
+              <select id="bankSelect" class="field"><option value="">选择银行</option></select>
+              <div id="bankSelectError" class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="cardNumberInput">尾号（非必填）</label>
+              <input id="cardNumberInput" class="field" type="text" placeholder="如 8203" maxlength="16" inputmode="numeric" />
+              <div id="cardNumberError" class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="billingDayInput">账单日</label>
+              <input id="billingDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
+              <div id="billingDayError" class="field-error"></div>
+            </div>
           </div>
         </div>
-        <div class="tip-box" id="cardRuleTip">固定还款日模式：填写每月还款日。</div>
-        <div class="switch-row">
-          <label><input id="isNextPeriodInput" type="checkbox" /> 下个账期生效</label>
-          <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
+
+        <div class="modal-section">
+          <h3 class="section-title">还款规则</h3>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="ruleTypeSelect">还款规则</label>
+              <select id="ruleTypeSelect" class="field">
+                <option value="repaymentDay">固定还款日</option>
+                <option value="graceDays">账单日后 N 天</option>
+              </select>
+              <div class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="repaymentDayInput">还款日</label>
+              <input id="repaymentDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
+              <div id="repaymentDayError" class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="graceDaysInput">账单后天数</label>
+              <input id="graceDaysInput" class="field" type="number" min="1" max="99" placeholder="如 20" disabled />
+              <div id="graceDaysError" class="field-error"></div>
+            </div>
+          </div>
+          <div class="tip-box" id="cardRuleTip">固定还款日模式：填写每月还款日。</div>
         </div>
+
+        <div class="modal-section">
+          <h3 class="section-title">补充状态</h3>
+          <div class="switch-row">
+            <label><input id="isNextPeriodInput" type="checkbox" /> 下个账期生效</label>
+            <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
+          </div>
+        </div>
+
         <div class="actions-row">
           <button id="cancelCardBtn" class="button secondary" type="button">取消</button>
           <button id="saveCardBtn" class="button" type="button">保存卡片</button>
@@ -727,23 +755,29 @@ export function renderDashboard() {
       </div>
 
       <div id="bankPanel" class="bank-panel">
-        <div class="form-grid">
-          <div class="field-group">
-            <label for="bankNameInput">银行名称</label>
-            <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
-            <div id="bankNameError" class="field-error"></div>
-          </div>
-          <div class="field-group full">
-            <label for="bankIconUrlInput">图标地址（非必填）</label>
-            <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
-            <div id="bankIconUrlError" class="field-error"></div>
+        <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="section-title">银行信息</h3>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="bankNameInput">银行名称</label>
+              <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
+              <div id="bankNameError" class="field-error"></div>
+            </div>
+            <div class="field-group full">
+              <label for="bankIconUrlInput">图标地址（非必填）</label>
+              <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
+              <div id="bankIconUrlError" class="field-error"></div>
+            </div>
           </div>
         </div>
         <div class="actions-row">
           <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
           <button id="saveBankBtn" class="button" type="button">保存银行</button>
         </div>
-        <div id="bankList" class="bank-list"></div>
+        <div class="modal-section">
+          <h3 class="section-title">现有银行</h3>
+          <div id="bankList" class="bank-list"></div>
+        </div>
       </div>
     </section>
 
