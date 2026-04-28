@@ -936,7 +936,7 @@ export function renderDashboard() {
         ok = false;
       }
       const icon = bankIconUrlInput.value.trim();
-      if (icon && !/^https?:\/\//i.test(icon)) {
+      if (icon && !(icon.toLowerCase().startsWith('http://') || icon.toLowerCase().startsWith('https://'))) {
         setError(bankIconUrlInput, bankIconUrlError, '图标地址需为 http/https 链接');
         ok = false;
       }
