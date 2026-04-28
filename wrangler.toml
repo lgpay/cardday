@@ -2,9 +2,6 @@ name = "cardday"
 main = "src/index.js"
 compatibility_date = "2026-04-27"
 
-[triggers]
-crons = ["0 0 * * *", "0 9 * * *"]
-
 [[d1_databases]]
 binding = "DB"
 database_name = "cardday-db"
