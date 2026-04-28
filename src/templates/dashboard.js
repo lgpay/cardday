@@ -716,9 +716,8 @@ export function renderDashboard() {
       <div class="helper-row">
         <div class="legend">
           <button class="badge ok js-quick-filter" data-filter="repaid" type="button">已还款</button>
-          <button class="badge warn js-quick-filter" data-filter="dueSoon" type="button">3 天内到期</button>
+          <button class="badge idle js-quick-filter" data-filter="unpaid" type="button">未还款</button>
           <button class="badge danger js-quick-filter" data-filter="overdue" type="button">已逾期</button>
-          <button class="badge idle js-quick-filter" data-filter="unexpired" type="button">未到期</button>
         </div>
         <div id="resultHint">准备加载数据…</div>
       </div>
