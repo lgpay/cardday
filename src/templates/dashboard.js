@@ -201,7 +201,21 @@ export function renderDashboard() {
       gap: 8px;
     }
 
-    .legend .badge { cursor: default; }
+    .legend .badge {
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease, border-color .16s ease;
+    }
+
+    .legend .badge:hover {
+      transform: translateY(-1px);
+      opacity: .95;
+    }
+
+    .legend .badge.active {
+      border-color: rgba(15, 23, 42, 0.12);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+    }
 
     .table-wrap {
       overflow: hidden;
@@ -449,10 +463,10 @@ export function renderDashboard() {
       </div>
       <div class="helper-row">
         <div class="legend">
-          <span class="badge ok">已还款</span>
-          <span class="badge warn">3 天内到期</span>
-          <span class="badge danger">已逾期</span>
-          <span class="badge idle">未到期</span>
+          <button class="badge ok js-quick-filter" data-filter="repaid" type="button">已还款</button>
+          <button class="badge warn js-quick-filter" data-filter="dueSoon" type="button">3 天内到期</button>
+          <button class="badge danger js-quick-filter" data-filter="overdue" type="button">已逾期</button>
+          <button class="badge idle js-quick-filter" data-filter="unexpired" type="button">未到期</button>
         </div>
         <div id="resultHint">准备加载数据…</div>
       </div>
@@ -565,6 +579,7 @@ export function renderDashboard() {
         if (status === 'unpaid' && card.repaid) return false;
         if (status === 'dueSoon' && (card.repaid || card.daysToRepayment < 0 || card.daysToRepayment > 3)) return false;
         if (status === 'overdue' && (card.repaid || card.daysToRepayment >= 0)) return false;
+        if (status === 'unexpired' && (card.repaid || card.daysToRepayment < 4)) return false;
         return true;
       });
 
@@ -607,6 +622,25 @@ export function renderDashboard() {
       return '↕';
     }
 
+    function syncQuickFilters() {
+      document.querySelectorAll('.js-quick-filter').forEach((btn) => {
+        const active = btn.dataset.filter === statusFilter.value;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+
+    function bindQuickFilters() {
+      document.querySelectorAll('.js-quick-filter').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const next = btn.dataset.filter;
+          statusFilter.value = statusFilter.value === next ? 'all' : next;
+          syncQuickFilters();
+          applyFilters();
+        });
+      });
+    }
+
     async function toggleRepaid(cardId, repaid) {
       try {
         const res = await fetch('/api/toggle-repaid', {
@@ -619,6 +653,7 @@ export function renderDashboard() {
         showToast(!repaid ? '已标记为已还款' : '已标记为未还款');
         const target = allItems.find(item => item.cardId === cardId);
         if (target) target.repaid = !repaid ? 1 : 0;
+        syncQuickFilters();
         applyFilters();
       } catch (err) {
         showToast(err.message || '操作失败');
@@ -733,8 +768,14 @@ export function renderDashboard() {
 
     [searchInput, statusFilter, bankFilter].forEach((el) => {
       el.addEventListener('input', applyFilters);
-      el.addEventListener('change', applyFilters);
+      el.addEventListener('change', () => {
+        syncQuickFilters();
+        applyFilters();
+      });
     });
+
+    bindQuickFilters();
+    syncQuickFilters();
 
     refreshBtn.addEventListener('click', () => loadCards(false));
 
