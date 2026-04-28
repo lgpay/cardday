@@ -179,6 +179,29 @@ export function renderDashboard() {
       margin-bottom: 6px;
     }
 
+    .field-error {
+      margin-top: 6px;
+      color: #b91c1c;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    .field.invalid {
+      border-color: #fca5a5;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.10);
+    }
+
+    .tip-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .field-group.full {
       grid-column: span 2;
     }
@@ -593,18 +616,22 @@ export function renderDashboard() {
           <div class="field-group full">
             <label for="cardNameInput">卡片名称</label>
             <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
+            <div id="cardNameError" class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="bankSelect">银行</label>
             <select id="bankSelect" class="field"><option value="">选择银行</option></select>
+            <div id="bankSelectError" class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="cardNumberInput">尾号（非必填）</label>
-            <input id="cardNumberInput" class="field" type="text" placeholder="如 8203" maxlength="16" />
+            <input id="cardNumberInput" class="field" type="text" placeholder="如 8203" maxlength="16" inputmode="numeric" />
+            <div id="cardNumberError" class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="billingDayInput">账单日</label>
             <input id="billingDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
+            <div id="billingDayError" class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="ruleTypeSelect">还款规则</label>
@@ -612,16 +639,20 @@ export function renderDashboard() {
               <option value="repaymentDay">固定还款日</option>
               <option value="graceDays">账单日后 N 天</option>
             </select>
+            <div class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="repaymentDayInput">还款日</label>
             <input id="repaymentDayInput" class="field" type="number" min="1" max="31" placeholder="1-31" />
+            <div id="repaymentDayError" class="field-error"></div>
           </div>
           <div class="field-group">
             <label for="graceDaysInput">账单后天数</label>
             <input id="graceDaysInput" class="field" type="number" min="1" max="99" placeholder="如 20" disabled />
+            <div id="graceDaysError" class="field-error"></div>
           </div>
         </div>
+        <div class="tip-box" id="cardRuleTip">固定还款日模式：填写每月还款日。</div>
         <div class="switch-row">
           <label><input id="isNextPeriodInput" type="checkbox" /> 下个账期生效</label>
           <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
@@ -637,10 +668,12 @@ export function renderDashboard() {
           <div class="field-group">
             <label for="bankNameInput">银行名称</label>
             <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
+            <div id="bankNameError" class="field-error"></div>
           </div>
           <div class="field-group full">
             <label for="bankIconUrlInput">图标地址（非必填）</label>
             <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
+            <div id="bankIconUrlError" class="field-error"></div>
           </div>
         </div>
         <div class="actions-row">
@@ -684,8 +717,17 @@ export function renderDashboard() {
     const repaidInput = document.getElementById('repaidInput');
     const cancelCardBtn = document.getElementById('cancelCardBtn');
     const saveCardBtn = document.getElementById('saveCardBtn');
+    const cardRuleTip = document.getElementById('cardRuleTip');
+    const cardNameError = document.getElementById('cardNameError');
+    const bankSelectError = document.getElementById('bankSelectError');
+    const cardNumberError = document.getElementById('cardNumberError');
+    const billingDayError = document.getElementById('billingDayError');
+    const repaymentDayError = document.getElementById('repaymentDayError');
+    const graceDaysError = document.getElementById('graceDaysError');
     const bankNameInput = document.getElementById('bankNameInput');
     const bankIconUrlInput = document.getElementById('bankIconUrlInput');
+    const bankNameError = document.getElementById('bankNameError');
+    const bankIconUrlError = document.getElementById('bankIconUrlError');
     const cancelBankBtn = document.getElementById('cancelBankBtn');
     const saveBankBtn = document.getElementById('saveBankBtn');
     const bankList = document.getElementById('bankList');
@@ -830,14 +872,90 @@ export function renderDashboard() {
       return '↕';
     }
 
+    function clearError(inputEl, errorEl) {
+      if (inputEl) inputEl.classList.remove('invalid');
+      if (errorEl) errorEl.textContent = '';
+    }
+
+    function setError(inputEl, errorEl, message) {
+      if (inputEl) inputEl.classList.add('invalid');
+      if (errorEl) errorEl.textContent = message;
+    }
+
+    function sanitizeDigitsInput(inputEl, maxLength = 16) {
+      inputEl.value = String(inputEl.value || '').replace(/\D+/g, '').slice(0, maxLength);
+    }
+
+    function validateCardForm() {
+      [
+        [cardNameInput, cardNameError],
+        [bankSelect, bankSelectError],
+        [cardNumberInput, cardNumberError],
+        [billingDayInput, billingDayError],
+        [repaymentDayInput, repaymentDayError],
+        [graceDaysInput, graceDaysError]
+      ].forEach(([inputEl, errorEl]) => clearError(inputEl, errorEl));
+
+      let ok = true;
+      if (!cardNameInput.value.trim()) {
+        setError(cardNameInput, cardNameError, '请填写卡片名称');
+        ok = false;
+      }
+      if (!bankSelect.value) {
+        setError(bankSelect, bankSelectError, '请选择银行');
+        ok = false;
+      }
+      if (!billingDayInput.value || Number(billingDayInput.value) < 1 || Number(billingDayInput.value) > 28) {
+        setError(billingDayInput, billingDayError, '账单日需在 1-28 之间');
+        ok = false;
+      }
+      if (cardNumberInput.value && !/^\d{1,16}$/.test(cardNumberInput.value)) {
+        setError(cardNumberInput, cardNumberError, '尾号只能是 1-16 位数字');
+        ok = false;
+      }
+      if (ruleTypeSelect.value === 'graceDays') {
+        if (!graceDaysInput.value || Number(graceDaysInput.value) < 1 || Number(graceDaysInput.value) > 99) {
+          setError(graceDaysInput, graceDaysError, '账单后天数需在 1-99 之间');
+          ok = false;
+        }
+      } else {
+        if (!repaymentDayInput.value || Number(repaymentDayInput.value) < 1 || Number(repaymentDayInput.value) > 31) {
+          setError(repaymentDayInput, repaymentDayError, '还款日需在 1-31 之间');
+          ok = false;
+        }
+      }
+      return ok;
+    }
+
+    function validateBankForm() {
+      clearError(bankNameInput, bankNameError);
+      clearError(bankIconUrlInput, bankIconUrlError);
+      let ok = true;
+      if (!bankNameInput.value.trim()) {
+        setError(bankNameInput, bankNameError, '请填写银行名称');
+        ok = false;
+      }
+      const icon = bankIconUrlInput.value.trim();
+      if (icon && !/^https?:\/\//i.test(icon)) {
+        setError(bankIconUrlInput, bankIconUrlError, '图标地址需为 http/https 链接');
+        ok = false;
+      }
+      return ok;
+    }
+
     function updateRuleInputs() {
       const useGraceDays = ruleTypeSelect.value === 'graceDays';
       graceDaysInput.disabled = !useGraceDays;
       repaymentDayInput.disabled = useGraceDays;
+      cardRuleTip.textContent = useGraceDays
+        ? '账单日后 N 天模式：填写账单日后多少天到期。'
+        : '固定还款日模式：填写每月还款日。';
       if (useGraceDays) {
         repaymentDayInput.value = '';
+        clearError(repaymentDayInput, repaymentDayError);
       } else {
         graceDaysInput.value = '';
+        clearError(graceDaysInput, graceDaysError);
       }
     }
 
@@ -951,6 +1069,10 @@ export function renderDashboard() {
     }
 
     async function saveBank() {
+      if (!validateBankForm()) {
+        showToast('先把银行信息填对');
+        return;
+      }
       const payload = {
         bankName: bankNameInput.value.trim(),
         bankIconUrl: bankIconUrlInput.value.trim()
@@ -978,6 +1100,16 @@ export function renderDashboard() {
     }
 
     async function saveCard() {
+      sanitizeDigitsInput(cardNumberInput, 16);
+      sanitizeDigitsInput(billingDayInput, 2);
+      sanitizeDigitsInput(repaymentDayInput, 2);
+      sanitizeDigitsInput(graceDaysInput, 2);
+
+      if (!validateCardForm()) {
+        showToast('先把卡片信息填对');
+        return;
+      }
+
       const payload = {
         bankId: Number(bankSelect.value),
         cardName: cardNameInput.value.trim(),
@@ -1212,6 +1344,25 @@ export function renderDashboard() {
     syncQuickFilters();
     updateRuleInputs();
 
+    [cardNumberInput, billingDayInput, repaymentDayInput, graceDaysInput].forEach((inputEl) => {
+      inputEl.addEventListener('input', () => sanitizeDigitsInput(inputEl, inputEl === cardNumberInput ? 16 : 2));
+    });
+
+    [cardNameInput, bankSelect, billingDayInput, repaymentDayInput, graceDaysInput, bankNameInput, bankIconUrlInput].forEach((inputEl) => {
+      inputEl.addEventListener('input', () => {
+        const map = new Map([
+          [cardNameInput, cardNameError],
+          [bankSelect, bankSelectError],
+          [billingDayInput, billingDayError],
+          [repaymentDayInput, repaymentDayError],
+          [graceDaysInput, graceDaysError],
+          [bankNameInput, bankNameError],
+          [bankIconUrlInput, bankIconUrlError]
+        ]);
+        clearError(inputEl, map.get(inputEl));
+      });
+    });
+
     ruleTypeSelect.addEventListener('change', updateRuleInputs);
     manageBanksBtn.addEventListener('click', async () => {
       try {
@@ -1239,6 +1390,8 @@ export function renderDashboard() {
           return;
         }
       }
+      bankPanel.classList.remove('show');
+      resetBankForm();
       if (formPanel.classList.contains('show') && editingCardId === null) {
         formPanel.classList.remove('show');
         resetCardForm();
