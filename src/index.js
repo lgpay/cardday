@@ -64,8 +64,8 @@ function normalizeCardPayload(payload = {}) {
       throw new Error('graceDays 需为 1-99')
     }
   } else {
-    if (!Number.isInteger(repaymentDay) || repaymentDay < 1 || repaymentDay > 31) {
-      throw new Error('repaymentDay 需为 1-31')
+    if (!Number.isInteger(repaymentDay) || repaymentDay < 1 || repaymentDay > 28) {
+      throw new Error('repaymentDay 需为 1-28')
     }
   }
 

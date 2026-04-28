@@ -643,7 +643,7 @@ export function renderDashboard() {
           </div>
           <div class="field-group">
             <label for="repaymentDayInput">还款日</label>
-            <input id="repaymentDayInput" class="field" type="number" min="1" max="31" placeholder="1-31" />
+            <input id="repaymentDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
             <div id="repaymentDayError" class="field-error"></div>
           </div>
           <div class="field-group">
@@ -919,8 +919,8 @@ export function renderDashboard() {
           ok = false;
         }
       } else {
-        if (!repaymentDayInput.value || Number(repaymentDayInput.value) < 1 || Number(repaymentDayInput.value) > 31) {
-          setError(repaymentDayInput, repaymentDayError, '还款日需在 1-31 之间');
+        if (!repaymentDayInput.value || Number(repaymentDayInput.value) < 1 || Number(repaymentDayInput.value) > 28) {
+          setError(repaymentDayInput, repaymentDayError, '还款日需在 1-28 之间');
           ok = false;
         }
       }
