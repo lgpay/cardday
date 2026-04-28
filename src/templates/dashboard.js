@@ -348,16 +348,7 @@ export function renderDashboard() {
     }
 
     .sort-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
-      color: #94a3b8;
-      font-size: 12px;
-      font-weight: 500;
+      display: none;
     }
 
     .empty, .loading {
@@ -678,21 +669,7 @@ export function renderDashboard() {
         ].join('');
       }).join('');
 
-      const sortLabelMap = {
-        daysToRepaymentAsc: '按到期时间 ↑',
-        daysToRepaymentDesc: '按到期时间 ↓',
-        billingDayAsc: '按账单日 ↑',
-        billingDayDesc: '按账单日 ↓',
-        gracePeriodAsc: '按免息期 ↑',
-        gracePeriodDesc: '按免息期 ↓',
-        bankNameAsc: '按银行名 A→Z',
-        bankNameDesc: '按银行名 Z→A'
-      };
-
       contentEl.innerHTML = [
-        '<div class="helper-row" style="padding:12px 16px 0;">',
-        '  <div class="pill-row"><span class="sort-chip">排序：' + sortLabelMap[currentSort] + '</span></div>',
-        '</div>',
         '<table>',
         '<thead><tr>' +
         '<th class="sortable-th" data-sort-field="bankName"><span class="sort-label">银行 <span class="sort-arrow">' + getSortArrow('bankName') + '</span></span></th>' +
