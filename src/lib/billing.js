@@ -1,29 +1,32 @@
 import { differenceInCalendarDays, addMonths, format } from '../vendor/date-fns-lite.js'
 
 export function calculateRepaymentDate(card, targetDate) {
-  const { billing_day, grace_type, grace_days, repayment_day } = card
+  const billingDay = Number(card.billing_day)
+  const graceType = Number(card.grace_type)
+  const graceDays = card.grace_days == null ? null : Number(card.grace_days)
+  const repaymentDay = card.repayment_day == null ? null : Number(card.repayment_day)
   let repaymentDate
 
-  if (grace_type) {
-    if (targetDate.getDate() < billing_day) {
-      repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, billing_day)
-      repaymentDate.setDate(repaymentDate.getDate() + grace_days)
+  if (graceType === 1) {
+    if (targetDate.getDate() < billingDay) {
+      repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, billingDay)
+      repaymentDate.setDate(repaymentDate.getDate() + graceDays)
     } else {
-      repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), billing_day)
-      repaymentDate.setDate(repaymentDate.getDate() + grace_days)
+      repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), billingDay)
+      repaymentDate.setDate(repaymentDate.getDate() + graceDays)
     }
   } else {
-    if (targetDate.getDate() < billing_day) {
-      if (repayment_day > billing_day) {
-        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, repayment_day)
+    if (targetDate.getDate() < billingDay) {
+      if (repaymentDay > billingDay) {
+        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, repaymentDay)
       } else {
-        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), repayment_day)
+        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), repaymentDay)
       }
     } else {
-      if (repayment_day > billing_day) {
-        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), repayment_day)
+      if (repaymentDay > billingDay) {
+        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), repaymentDay)
       } else {
-        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, repayment_day)
+        repaymentDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, repaymentDay)
       }
     }
   }
@@ -32,16 +35,17 @@ export function calculateRepaymentDate(card, targetDate) {
 }
 
 export function calculateLongestGracePeriod(card, currentDate) {
-  const { billing_day, is_next_period } = card
+  const billingDay = Number(card.billing_day)
+  const isNextPeriod = Number(card.is_next_period) === 1
   let billingDate
 
-  if (is_next_period) {
-    billingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), billing_day)
+  if (isNextPeriod) {
+    billingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), billingDay)
     if (billingDate <= currentDate) {
       billingDate = addMonths(billingDate, 1)
     }
   } else {
-    billingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), billing_day)
+    billingDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), billingDay)
     if (billingDate < currentDate) {
       billingDate = addMonths(billingDate, 1)
     }
