@@ -455,6 +455,7 @@ export function renderDashboard() {
           <option value="repaid">仅已还款</option>
           <option value="dueSoon">3 天内到期</option>
           <option value="overdue">已逾期</option>
+          <option value="unexpired">未到期</option>
         </select>
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
