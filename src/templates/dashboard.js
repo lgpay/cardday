@@ -136,7 +136,7 @@ export function renderDashboard() {
 
     .toolbar {
       display: grid;
-      grid-template-columns: 1.4fr repeat(2, minmax(140px, 0.5fr)) auto auto;
+      grid-template-columns: 1.6fr minmax(140px, 0.6fr) auto auto auto;
       gap: 12px;
       margin-bottom: 16px;
       align-items: center;
@@ -586,14 +586,6 @@ export function renderDashboard() {
     <section class="panel">
       <div class="toolbar">
         <input id="searchInput" class="field" type="search" placeholder="搜索银行 / 卡片名称 / 卡号尾号" />
-        <select id="statusFilter" class="field">
-          <option value="all">全部状态</option>
-          <option value="unpaid">仅待还款</option>
-          <option value="repaid">仅已还款</option>
-          <option value="dueSoon">3 天内到期</option>
-          <option value="overdue">已逾期</option>
-          <option value="unexpired">未到期</option>
-        </select>
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
         </select>
@@ -696,7 +688,6 @@ export function renderDashboard() {
     const loadingEl = document.getElementById('loading');
     const toastEl = document.getElementById('toast');
     const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
     const bankFilter = document.getElementById('bankFilter');
     const manageBanksBtn = document.getElementById('manageBanksBtn');
     const newCardBtn = document.getElementById('newCardBtn');
@@ -736,6 +727,7 @@ export function renderDashboard() {
     let filteredItems = [];
     let lastMeta = null;
     let currentSort = 'daysToRepaymentAsc';
+    let currentStatusFilter = 'all';
     let banksCache = [];
     let editingCardId = null;
     let editingBankId = null;
@@ -820,7 +812,7 @@ export function renderDashboard() {
 
     function applyFilters() {
       const q = searchInput.value.trim().toLowerCase();
-      const status = statusFilter.value;
+      const status = currentStatusFilter;
       const bank = bankFilter.value;
       let items = allItems.filter(card => {
         if (q && !cardSearchText(card).includes(q)) return false;
@@ -1164,7 +1156,7 @@ export function renderDashboard() {
 
     function syncQuickFilters() {
       document.querySelectorAll('.js-quick-filter').forEach((btn) => {
-        const active = btn.dataset.filter === statusFilter.value;
+        const active = btn.dataset.filter === currentStatusFilter;
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
@@ -1174,7 +1166,7 @@ export function renderDashboard() {
       document.querySelectorAll('.js-quick-filter').forEach((btn) => {
         btn.addEventListener('click', () => {
           const next = btn.dataset.filter;
-          statusFilter.value = statusFilter.value === next ? 'all' : next;
+          currentStatusFilter = currentStatusFilter === next ? 'all' : next;
           syncQuickFilters();
           applyFilters();
         });
@@ -1332,10 +1324,9 @@ export function renderDashboard() {
       }
     }
 
-    [searchInput, statusFilter, bankFilter].forEach((el) => {
+    [searchInput, bankFilter].forEach((el) => {
       el.addEventListener('input', applyFilters);
       el.addEventListener('change', () => {
-        syncQuickFilters();
         applyFilters();
       });
     });
