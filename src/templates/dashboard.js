@@ -1645,11 +1645,12 @@ export function renderDashboard() {
       inputEl.addEventListener('input', () => sanitizeDigitsInput(inputEl, inputEl === cardNumberInput ? 16 : 2));
     });
 
-    [cardNameInput, bankSelect, billingDayInput, repaymentDayInput, graceDaysInput, bankNameInput, bankIconUrlInput, reminderThresholdInput].forEach((inputEl) => {
+    [cardNameInput, bankSelect, cardNumberInput, billingDayInput, repaymentDayInput, graceDaysInput, bankNameInput, bankIconUrlInput, reminderThresholdInput].forEach((inputEl) => {
       inputEl.addEventListener('input', () => {
         const map = new Map([
           [cardNameInput, cardNameError],
           [bankSelect, bankSelectError],
+          [cardNumberInput, cardNumberError],
           [billingDayInput, billingDayError],
           [repaymentDayInput, repaymentDayError],
           [graceDaysInput, graceDaysError],
