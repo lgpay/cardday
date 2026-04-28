@@ -1,11 +1,15 @@
 import { getCorsHeaders } from './lib/http.js'
 import {
+  createBank,
   createCard,
+  deleteBank,
   deleteCard,
+  getBankById,
   getCardById,
   listBanks,
   listCards,
   listCardBillingDays,
+  updateBank,
   updateCard,
   updateRepaidStatus
 } from './lib/db.js'
@@ -27,6 +31,16 @@ function json(data, init = {}) {
 
 function badRequest(message) {
   return json({ error: message }, { status: 400 })
+}
+
+function normalizeBankPayload(payload = {}) {
+  const bankName = String(payload.bankName || '').trim()
+  const rawIcon = payload.bankIconUrl == null ? '' : String(payload.bankIconUrl).trim()
+  const bankIconUrl = rawIcon || null
+
+  if (!bankName) throw new Error('bankName 不能为空')
+
+  return { bankName, bankIconUrl }
 }
 
 function normalizeCardPayload(payload = {}) {
@@ -98,6 +112,33 @@ async function handleBanksApi(env) {
   return json({ items: banks })
 }
 
+async function handleCreateBank(request, env) {
+  const payload = await request.json()
+  const input = normalizeBankPayload(payload)
+  const bankId = await createBank(env, input)
+  const bank = await getBankById(env, bankId)
+  return json({ success: true, item: bank }, { status: 201 })
+}
+
+async function handleUpdateBank(request, env, bankId) {
+  if (!Number.isInteger(bankId) || bankId <= 0) {
+    return badRequest('bankId 不合法')
+  }
+  const payload = await request.json()
+  const input = normalizeBankPayload(payload)
+  await updateBank(env, bankId, input)
+  const bank = await getBankById(env, bankId)
+  return json({ success: true, item: bank })
+}
+
+async function handleDeleteBank(env, bankId) {
+  if (!Number.isInteger(bankId) || bankId <= 0) {
+    return badRequest('bankId 不合法')
+  }
+  await deleteBank(env, bankId)
+  return json({ success: true, bankId })
+}
+
 async function handleCreateCard(request, env) {
   const payload = await request.json()
   const input = normalizeCardPayload(payload)
@@ -146,6 +187,7 @@ export default {
     const corsHeaders = getCorsHeaders()
     const url = new URL(request.url)
     const cardIdMatch = url.pathname.match(/^\/api\/cards\/(\d+)$/)
+    const bankIdMatch = url.pathname.match(/^\/api\/banks\/(\d+)$/)
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
@@ -158,6 +200,18 @@ export default {
 
       if (request.method === 'GET' && url.pathname === '/api/banks') {
         return await handleBanksApi(env)
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/banks') {
+        return await handleCreateBank(request, env)
+      }
+
+      if (request.method === 'PUT' && bankIdMatch) {
+        return await handleUpdateBank(request, env, Number(bankIdMatch[1]))
+      }
+
+      if (request.method === 'DELETE' && bankIdMatch) {
+        return await handleDeleteBank(env, Number(bankIdMatch[1]))
       }
 
       if (request.method === 'POST' && url.pathname === '/api/cards') {

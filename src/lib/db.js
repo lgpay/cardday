@@ -2,6 +2,7 @@ const SELECT_ALL_CARDS = 'SELECT c.card_id, c.bank_id, c.card_name, c.card_numbe
 const SELECT_UNPAID_CARDS = 'SELECT c.card_id, c.bank_id, c.card_name, c.card_number, c.billing_day, c.is_next_period, c.grace_type, c.grace_days, c.repayment_day, c.repaid, b.bank_name FROM credit_cards c JOIN banks b ON c.bank_id = b.bank_id WHERE c.repaid = 0'
 const SELECT_BILLING_DAYS = 'SELECT card_id, billing_day FROM credit_cards'
 const SELECT_BANKS = 'SELECT bank_id, bank_name, bank_icon_url FROM banks ORDER BY bank_id'
+const SELECT_BANK_BY_ID = 'SELECT bank_id, bank_name, bank_icon_url FROM banks WHERE bank_id = ?'
 const SELECT_CARD_BY_ID = 'SELECT card_id, bank_id, card_name, card_number, billing_day, is_next_period, grace_type, grace_days, repayment_day, repaid FROM credit_cards WHERE card_id = ?'
 
 export async function listCards(env) {
@@ -24,12 +25,37 @@ export async function listBanks(env) {
   return results
 }
 
+export async function getBankById(env, bankId) {
+  return env.DB.prepare(SELECT_BANK_BY_ID).bind(bankId).first()
+}
+
 export async function getCardById(env, cardId) {
   return env.DB.prepare(SELECT_CARD_BY_ID).bind(cardId).first()
 }
 
 export async function updateRepaidStatus(env, cardId, repaid) {
   return env.DB.prepare('UPDATE credit_cards SET repaid = ? WHERE card_id = ?').bind(repaid, cardId).run()
+}
+
+export async function createBank(env, input) {
+  const result = await env.DB.prepare(
+    'INSERT INTO banks (bank_name, bank_icon_url) VALUES (?, ?)'
+  ).bind(input.bankName, input.bankIconUrl).run()
+  return result.meta?.last_row_id
+}
+
+export async function updateBank(env, bankId, input) {
+  return env.DB.prepare(
+    'UPDATE banks SET bank_name = ?, bank_icon_url = ? WHERE bank_id = ?'
+  ).bind(input.bankName, input.bankIconUrl, bankId).run()
+}
+
+export async function deleteBank(env, bankId) {
+  const usage = await env.DB.prepare('SELECT COUNT(*) AS cnt FROM credit_cards WHERE bank_id = ?').bind(bankId).first()
+  if (Number(usage?.cnt || 0) > 0) {
+    throw new Error('该银行下仍有关联卡片，不能删除')
+  }
+  return env.DB.prepare('DELETE FROM banks WHERE bank_id = ?').bind(bankId).run()
 }
 
 export async function createCard(env, input) {

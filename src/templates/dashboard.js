@@ -154,7 +154,15 @@ export function renderDashboard() {
       border-top: 1px solid var(--border);
     }
 
-    .form-panel.show {
+    .bank-panel {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .form-panel.show,
+    .bank-panel.show {
       display: block;
     }
 
@@ -203,6 +211,30 @@ export function renderDashboard() {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .bank-list {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .bank-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+
+    .bank-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
     }
 
     .mini-btn {
@@ -542,6 +574,7 @@ export function renderDashboard() {
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
         </select>
+        <button id="manageBanksBtn" class="button secondary" type="button">银行管理</button>
         <button id="newCardBtn" class="button secondary" type="button">新增卡片</button>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
@@ -598,6 +631,24 @@ export function renderDashboard() {
           <button id="saveCardBtn" class="button" type="button">保存卡片</button>
         </div>
       </div>
+
+      <div id="bankPanel" class="bank-panel">
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="bankNameInput">银行名称</label>
+            <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
+          </div>
+          <div class="field-group full">
+            <label for="bankIconUrlInput">图标地址（非必填）</label>
+            <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
+          </div>
+        </div>
+        <div class="actions-row">
+          <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
+          <button id="saveBankBtn" class="button" type="button">保存银行</button>
+        </div>
+        <div id="bankList" class="bank-list"></div>
+      </div>
     </section>
 
     <section class="table-wrap">
@@ -614,12 +665,14 @@ export function renderDashboard() {
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const bankFilter = document.getElementById('bankFilter');
+    const manageBanksBtn = document.getElementById('manageBanksBtn');
     const newCardBtn = document.getElementById('newCardBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
     const summaryGrid = document.getElementById('summaryGrid');
     const formPanel = document.getElementById('formPanel');
+    const bankPanel = document.getElementById('bankPanel');
     const bankSelect = document.getElementById('bankSelect');
     const cardNameInput = document.getElementById('cardNameInput');
     const cardNumberInput = document.getElementById('cardNumberInput');
@@ -631,6 +684,11 @@ export function renderDashboard() {
     const repaidInput = document.getElementById('repaidInput');
     const cancelCardBtn = document.getElementById('cancelCardBtn');
     const saveCardBtn = document.getElementById('saveCardBtn');
+    const bankNameInput = document.getElementById('bankNameInput');
+    const bankIconUrlInput = document.getElementById('bankIconUrlInput');
+    const cancelBankBtn = document.getElementById('cancelBankBtn');
+    const saveBankBtn = document.getElementById('saveBankBtn');
+    const bankList = document.getElementById('bankList');
 
     let allItems = [];
     let filteredItems = [];
@@ -638,6 +696,7 @@ export function renderDashboard() {
     let currentSort = 'daysToRepaymentAsc';
     let banksCache = [];
     let editingCardId = null;
+    let editingBankId = null;
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -700,6 +759,7 @@ export function renderDashboard() {
     function fillBankOptions(items) {
       banksCache = Array.isArray(items) ? items : [];
       bankSelect.innerHTML = '<option value="">选择银行</option>' + banksCache.map(item => '<option value="' + item.bank_id + '">' + escapeHtml(item.bank_name) + '</option>').join('');
+      renderBankList();
     }
 
     function updateSummary(items) {
@@ -797,6 +857,64 @@ export function renderDashboard() {
       updateRuleInputs();
     }
 
+    function resetBankForm() {
+      editingBankId = null;
+      manageBanksBtn.textContent = '银行管理';
+      saveBankBtn.textContent = '保存银行';
+      bankNameInput.value = '';
+      bankIconUrlInput.value = '';
+    }
+
+    function renderBankList() {
+      if (!banksCache.length) {
+        bankList.innerHTML = '<div class="subtext">暂无银行数据</div>';
+        return;
+      }
+      bankList.innerHTML = banksCache.map((bank) => {
+        const icon = bank.bank_icon_url
+          ? '<img class="bank-icon" src="' + escapeHtml(bank.bank_icon_url) + '" alt="' + escapeHtml(bank.bank_name) + '" loading="lazy" referrerpolicy="no-referrer">'
+          : '<span class="bank-fallback">' + escapeHtml(getBankInitial(bank.bank_name)) + '</span>';
+        return '<div class="bank-item">'
+          + '<div class="bank-meta">' + icon + '<div><div class="bank-name">' + escapeHtml(bank.bank_name) + '</div><div class="subtext">ID: ' + bank.bank_id + '</div></div></div>'
+          + '<div class="table-actions">'
+          + '<button class="mini-btn js-edit-bank" data-bank-id="' + bank.bank_id + '" type="button">编辑</button>'
+          + '<button class="mini-btn danger-text js-delete-bank" data-bank-id="' + bank.bank_id + '" data-bank-name="' + escapeHtml(bank.bank_name) + '" type="button">删除</button>'
+          + '</div></div>'
+      }).join('');
+
+      bankList.querySelectorAll('.js-edit-bank').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const bank = banksCache.find(item => item.bank_id === Number(btn.dataset.bankId));
+          if (!bank) return;
+          editingBankId = bank.bank_id;
+          manageBanksBtn.textContent = '编辑银行';
+          saveBankBtn.textContent = '保存修改';
+          bankPanel.classList.add('show');
+          bankNameInput.value = bank.bank_name || '';
+          bankIconUrlInput.value = bank.bank_icon_url || '';
+          bankNameInput.focus();
+        });
+      });
+
+      bankList.querySelectorAll('.js-delete-bank').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const ok = confirm('确认删除银行「' + (btn.dataset.bankName || '') + '」？');
+          if (!ok) return;
+          try {
+            const res = await fetch('/api/banks/' + btn.dataset.bankId, { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || '删除失败');
+            showToast('银行已删除');
+            resetBankForm();
+            await loadBanks();
+            await loadCards(false);
+          } catch (err) {
+            showToast(err.message || '删除失败');
+          }
+        });
+      });
+    }
+
     function openCreateForm() {
       editingCardId = null;
       newCardBtn.textContent = '新增卡片';
@@ -830,6 +948,33 @@ export function renderDashboard() {
       if (!res.ok) throw new Error('加载银行失败');
       const data = await res.json();
       fillBankOptions(data.items || []);
+    }
+
+    async function saveBank() {
+      const payload = {
+        bankName: bankNameInput.value.trim(),
+        bankIconUrl: bankIconUrlInput.value.trim()
+      };
+      saveBankBtn.disabled = true;
+      saveBankBtn.textContent = '保存中...';
+      try {
+        const res = await fetch(editingBankId ? ('/api/banks/' + editingBankId) : '/api/banks', {
+          method: editingBankId ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '保存失败');
+        showToast(editingBankId ? '银行已更新' : '银行已新增');
+        resetBankForm();
+        await loadBanks();
+        await loadCards(false);
+      } catch (err) {
+        showToast(err.message || '保存失败');
+      } finally {
+        saveBankBtn.disabled = false;
+        saveBankBtn.textContent = editingBankId ? '保存修改' : '保存银行';
+      }
     }
 
     async function saveCard() {
@@ -1068,6 +1213,23 @@ export function renderDashboard() {
     updateRuleInputs();
 
     ruleTypeSelect.addEventListener('change', updateRuleInputs);
+    manageBanksBtn.addEventListener('click', async () => {
+      try {
+        await loadBanks();
+      } catch (err) {
+        showToast(err.message || '加载银行失败');
+        return;
+      }
+      formPanel.classList.remove('show');
+      resetCardForm();
+      bankPanel.classList.toggle('show');
+      if (!bankPanel.classList.contains('show')) {
+        resetBankForm();
+      } else {
+        bankNameInput.focus();
+      }
+    });
+
     newCardBtn.addEventListener('click', async () => {
       if (!banksCache.length) {
         try {
@@ -1085,6 +1247,12 @@ export function renderDashboard() {
       resetCardForm();
       openCreateForm();
     });
+    cancelBankBtn.addEventListener('click', () => {
+      bankPanel.classList.remove('show');
+      resetBankForm();
+    });
+    saveBankBtn.addEventListener('click', saveBank);
+
     cancelCardBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');
       resetCardForm();
