@@ -229,6 +229,28 @@ export function renderDashboard() {
       white-space: nowrap;
     }
 
+    .sortable-th {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color .16s ease, color .16s ease;
+    }
+
+    .sortable-th:hover {
+      background: #eef4ff;
+      color: #1d4ed8;
+    }
+
+    .sort-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sort-arrow {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
     tbody tr { transition: background-color .16s ease; }
     tbody tr:hover { background: #f8fbff; }
     tr:last-child td { border-bottom: none; }
@@ -433,9 +455,14 @@ export function renderDashboard() {
           <option value="all">全部银行</option>
         </select>
         <select id="sortBy" class="field">
-          <option value="daysToRepaymentAsc">按到期时间排序</option>
-          <option value="billingDayAsc">按账单日排序</option>
-          <option value="bankNameAsc">按银行名称排序</option>
+          <option value="daysToRepaymentAsc">按到期时间 ↑</option>
+          <option value="daysToRepaymentDesc">按到期时间 ↓</option>
+          <option value="billingDayAsc">按账单日 ↑</option>
+          <option value="billingDayDesc">按账单日 ↓</option>
+          <option value="bankNameAsc">按银行名称 A→Z</option>
+          <option value="bankNameDesc">按银行名称 Z→A</option>
+          <option value="cardNameAsc">按卡片名称 A→Z</option>
+          <option value="cardNameDesc">按卡片名称 Z→A</option>
         </select>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
@@ -563,7 +590,12 @@ export function renderDashboard() {
       const sorter = sortBy.value;
       items.sort((a, b) => {
         if (sorter === 'billingDayAsc') return a.billingDay - b.billingDay || a.cardId - b.cardId;
+        if (sorter === 'billingDayDesc') return b.billingDay - a.billingDay || a.cardId - b.cardId;
         if (sorter === 'bankNameAsc') return String(a.bankName).localeCompare(String(b.bankName), 'zh-CN') || a.cardId - b.cardId;
+        if (sorter === 'bankNameDesc') return String(b.bankName).localeCompare(String(a.bankName), 'zh-CN') || a.cardId - b.cardId;
+        if (sorter === 'cardNameAsc') return String(a.cardName || '').localeCompare(String(b.cardName || ''), 'zh-CN') || a.cardId - b.cardId;
+        if (sorter === 'cardNameDesc') return String(b.cardName || '').localeCompare(String(a.cardName || ''), 'zh-CN') || a.cardId - b.cardId;
+        if (sorter === 'daysToRepaymentDesc') return b.daysToRepayment - a.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
         return a.daysToRepayment - b.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
       });
 
@@ -571,6 +603,27 @@ export function renderDashboard() {
       updateSummary(filteredItems);
       resultHint.textContent = '当前显示 ' + filteredItems.length + ' / ' + allItems.length + ' 张卡';
       renderTable(filteredItems);
+    }
+
+    function toggleSort(field) {
+      const current = sortBy.value;
+      const pairs = {
+        daysToRepayment: ['daysToRepaymentAsc', 'daysToRepaymentDesc'],
+        billingDay: ['billingDayAsc', 'billingDayDesc'],
+        bankName: ['bankNameAsc', 'bankNameDesc'],
+        cardName: ['cardNameAsc', 'cardNameDesc']
+      };
+      const [asc, desc] = pairs[field] || [];
+      if (!asc) return;
+      sortBy.value = current === asc ? desc : asc;
+      applyFilters();
+    }
+
+    function getSortArrow(field) {
+      const current = sortBy.value;
+      if (current === field + 'Asc') return '↑';
+      if (current === field + 'Desc') return '↓';
+      return '↕';
     }
 
     async function toggleRepaid(cardId, repaid) {
@@ -636,9 +689,14 @@ export function renderDashboard() {
       }).join('');
 
       const sortLabelMap = {
-        daysToRepaymentAsc: '按到期时间',
-        billingDayAsc: '按账单日',
-        bankNameAsc: '按银行名'
+        daysToRepaymentAsc: '按到期时间 ↑',
+        daysToRepaymentDesc: '按到期时间 ↓',
+        billingDayAsc: '按账单日 ↑',
+        billingDayDesc: '按账单日 ↓',
+        bankNameAsc: '按银行名 A→Z',
+        bankNameDesc: '按银行名 Z→A',
+        cardNameAsc: '按卡片名称 A→Z',
+        cardNameDesc: '按卡片名称 Z→A'
       };
 
       contentEl.innerHTML = [
@@ -646,10 +704,22 @@ export function renderDashboard() {
         '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[sortBy.value] + '</span></div>',
         '</div>',
         '<table>',
-        '<thead><tr><th>银行</th><th>卡片名称</th><th>尾号</th><th>账单日</th><th>还款日</th><th>免息期</th><th>状态</th></tr></thead>',
+        '<thead><tr>' +
+        '<th class="sortable-th" data-sort-field="bankName"><span class="sort-label">银行 <span class="sort-arrow">' + getSortArrow('bankName') + '</span></span></th>' +
+        '<th class="sortable-th" data-sort-field="cardName"><span class="sort-label">卡片名称 <span class="sort-arrow">' + getSortArrow('cardName') + '</span></span></th>' +
+        '<th>尾号</th>' +
+        '<th class="sortable-th" data-sort-field="billingDay"><span class="sort-label">账单日 <span class="sort-arrow">' + getSortArrow('billingDay') + '</span></span></th>' +
+        '<th class="sortable-th" data-sort-field="daysToRepayment"><span class="sort-label">还款日 <span class="sort-arrow">' + getSortArrow('daysToRepayment') + '</span></span></th>' +
+        '<th>免息期</th>' +
+        '<th>状态</th>' +
+        '</tr></thead>',
         '<tbody>' + rows + '</tbody>',
         '</table>'
       ].join('');
+
+      contentEl.querySelectorAll('.sortable-th').forEach((th) => {
+        th.addEventListener('click', () => toggleSort(th.dataset.sortField));
+      });
 
       contentEl.querySelectorAll('.js-bank-icon').forEach((img) => {
         img.addEventListener('error', () => {
