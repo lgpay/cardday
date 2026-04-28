@@ -98,7 +98,6 @@ function normalizeReminderPayload(payload = {}) {
   const qywxToUser = String(payload.qywxToUser || '').trim()
   const qywxCorpSecret = payload.qywxCorpSecret == null ? '' : String(payload.qywxCorpSecret).trim()
   const qywxProxyUrl = String(payload.qywxProxyUrl || '').trim()
-  const qywxProxyToken = payload.qywxProxyToken == null ? '' : String(payload.qywxProxyToken).trim()
 
   if (!Number.isInteger(reminderThreshold) || reminderThreshold < 0 || reminderThreshold > 30) {
     throw new Error('reminderThreshold 需在 0-30 之间')
@@ -115,8 +114,7 @@ function normalizeReminderPayload(payload = {}) {
     qywxAgentId,
     qywxToUser,
     qywxCorpSecret,
-    qywxProxyUrl,
-    qywxProxyToken
+    qywxProxyUrl
   }
 }
 
@@ -234,8 +232,7 @@ async function handleReminderSettingsApi(env) {
         corpSecretConfigured: !!settings.qywxCorpSecretConfigured || !!env.CORP_SECRET,
         agentIdConfigured: !!settings.qywxAgentId || !!env.AGENT_ID,
         toUserConfigured: !!settings.qywxToUser || !!env.TO_USER,
-        proxyUrlConfigured: !!settings.qywxProxyUrl,
-        proxyTokenConfigured: !!settings.qywxProxyTokenConfigured
+        proxyUrlConfigured: !!settings.qywxProxyUrl
       }
     }
   })

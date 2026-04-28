@@ -8,8 +8,7 @@ function getQywxConfig(env, settings = null) {
     corpSecret: String((settings && settings.qywxCorpSecret) || env.CORP_SECRET || '').trim(),
     agentId: String((settings && settings.qywxAgentId) || env.AGENT_ID || '').trim(),
     toUser: String((settings && settings.qywxToUser) || env.TO_USER || '').trim(),
-    proxyUrl: String((settings && settings.qywxProxyUrl) || '').trim(),
-    proxyToken: String((settings && settings.qywxProxyToken) || '').trim()
+    proxyUrl: String((settings && settings.qywxProxyUrl) || '').trim()
   }
 }
 
@@ -27,13 +26,8 @@ export async function sendQYWXMessage(env, message, settings = null) {
       throw new Error('代理模式下仍需填写企业微信参数')
     }
 
-    const proxyHeaders = { 'Content-Type': 'application/json' }
-    if (config.proxyToken) {
-      proxyHeaders.Authorization = `Bearer ${config.proxyToken}`
-    }
-
     const tokenUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/gettoken') + `?corpid=${encodeURIComponent(config.corpId)}&corpsecret=${encodeURIComponent(config.corpSecret)}`
-    const tokenRes = await fetch(tokenUrl, { headers: proxyHeaders })
+    const tokenRes = await fetch(tokenUrl, { headers: { 'Content-Type': 'application/json' } })
     const tokenData = await tokenRes.json().catch(() => ({}))
     if (!tokenRes.ok || !tokenData.access_token) {
       throw new Error(tokenData.errmsg || `代理获取 access_token 失败（HTTP ${tokenRes.status}）`)
@@ -49,7 +43,7 @@ export async function sendQYWXMessage(env, message, settings = null) {
 
     const sendRes = await fetch(sendUrl, {
       method: 'POST',
-      headers: proxyHeaders,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(messageData)
     })
     const sendData = await sendRes.json().catch(() => ({}))
