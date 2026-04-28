@@ -881,6 +881,7 @@ export function renderDashboard() {
         <div class="actions-row">
           <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
           <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
+          <button id="testReminderMessageBtn" class="button secondary" type="button">发送测试消息</button>
           <button id="saveReminderBtn" class="button" type="button">保存设置</button>
         </div>
       </div>
@@ -965,6 +966,7 @@ export function renderDashboard() {
     const reminderEnvStatus = document.getElementById('reminderEnvStatus');
     const cancelReminderBtn = document.getElementById('cancelReminderBtn');
     const testReminderBtn = document.getElementById('testReminderBtn');
+    const testReminderMessageBtn = document.getElementById('testReminderMessageBtn');
     const saveReminderBtn = document.getElementById('saveReminderBtn');
 
     let allItems = [];
@@ -1450,6 +1452,22 @@ export function renderDashboard() {
       }
     }
 
+    async function testReminderMessage() {
+      testReminderMessageBtn.disabled = true;
+      testReminderMessageBtn.textContent = '发送中...';
+      try {
+        const res = await fetch('/api/reminder-settings/test-message', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '发送失败');
+        showToast(data.message || '测试消息已发送');
+      } catch (err) {
+        showToast(err.message || '发送失败');
+      } finally {
+        testReminderMessageBtn.disabled = false;
+        testReminderMessageBtn.textContent = '发送测试消息';
+      }
+    }
+
     async function saveCard() {
       sanitizeDigitsInput(cardNumberInput, 16);
       clearError(cardNumberInput, cardNumberError);
@@ -1769,6 +1787,7 @@ export function renderDashboard() {
     });
     saveReminderBtn.addEventListener('click', saveReminderSettings);
     testReminderBtn.addEventListener('click', testReminder);
+    testReminderMessageBtn.addEventListener('click', testReminderMessage);
 
     cancelCardBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');

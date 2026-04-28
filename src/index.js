@@ -17,7 +17,7 @@ import {
   updateRepaidStatus
 } from './lib/db.js'
 import { buildCardViewModels } from './lib/billing.js'
-import { checkAndSendReminders } from './lib/reminder.js'
+import { checkAndSendReminders, sendQYWXMessage } from './lib/reminder.js'
 import { renderDashboard } from './templates/dashboard.js'
 import { renderLoginPage } from './templates/login.js'
 
@@ -253,6 +253,12 @@ async function handleReminderTest(env) {
   return json({ success: true })
 }
 
+async function handleReminderSendTestMessage(env) {
+  const settings = await getAppSettings(env)
+  await sendQYWXMessage(env, 'CardDay 测试消息：企业微信通知通道已接通。', settings)
+  return json({ success: true, message: '测试消息已发送' })
+}
+
 async function handleCreateBank(request, env) {
   const payload = await request.json()
   const input = normalizeBankPayload(payload)
@@ -367,6 +373,9 @@ export default {
       }
       if (request.method === 'POST' && pathname === '/api/reminder-settings/test') {
         return await handleReminderTest(env)
+      }
+      if (request.method === 'POST' && pathname === '/api/reminder-settings/test-message') {
+        return await handleReminderSendTestMessage(env)
       }
       if (request.method === 'PUT' && pathname === '/api/reminder-settings') {
         return await handleUpdateReminderSettings(request, env)
