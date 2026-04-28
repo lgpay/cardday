@@ -136,7 +136,7 @@ export function renderDashboard() {
 
     .toolbar {
       display: grid;
-      grid-template-columns: 1.2fr repeat(3, minmax(140px, 0.45fr)) auto;
+      grid-template-columns: 1.4fr repeat(2, minmax(140px, 0.5fr)) auto;
       gap: 12px;
       margin-bottom: 16px;
       align-items: center;
@@ -454,16 +454,6 @@ export function renderDashboard() {
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
         </select>
-        <select id="sortBy" class="field">
-          <option value="daysToRepaymentAsc">按到期时间 ↑</option>
-          <option value="daysToRepaymentDesc">按到期时间 ↓</option>
-          <option value="billingDayAsc">按账单日 ↑</option>
-          <option value="billingDayDesc">按账单日 ↓</option>
-          <option value="gracePeriodAsc">按免息期 ↑</option>
-          <option value="gracePeriodDesc">按免息期 ↓</option>
-          <option value="bankNameAsc">按银行名称 A→Z</option>
-          <option value="bankNameDesc">按银行名称 Z→A</option>
-        </select>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
       <div class="helper-row">
@@ -491,7 +481,6 @@ export function renderDashboard() {
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const bankFilter = document.getElementById('bankFilter');
-    const sortBy = document.getElementById('sortBy');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
@@ -500,6 +489,7 @@ export function renderDashboard() {
     let allItems = [];
     let filteredItems = [];
     let lastMeta = null;
+    let currentSort = 'daysToRepaymentAsc';
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -587,7 +577,7 @@ export function renderDashboard() {
         return true;
       });
 
-      const sorter = sortBy.value;
+      const sorter = currentSort;
       items.sort((a, b) => {
         if (sorter === 'billingDayAsc') return a.billingDay - b.billingDay || a.cardId - b.cardId;
         if (sorter === 'billingDayDesc') return b.billingDay - a.billingDay || a.cardId - b.cardId;
@@ -606,7 +596,7 @@ export function renderDashboard() {
     }
 
     function toggleSort(field) {
-      const current = sortBy.value;
+      const current = currentSort;
       const pairs = {
         daysToRepayment: ['daysToRepaymentAsc', 'daysToRepaymentDesc'],
         billingDay: ['billingDayAsc', 'billingDayDesc'],
@@ -615,12 +605,12 @@ export function renderDashboard() {
       };
       const [asc, desc] = pairs[field] || [];
       if (!asc) return;
-      sortBy.value = current === asc ? desc : asc;
+      currentSort = current === asc ? desc : asc;
       applyFilters();
     }
 
     function getSortArrow(field) {
-      const current = sortBy.value;
+      const current = currentSort;
       if (current === field + 'Asc') return '↑';
       if (current === field + 'Desc') return '↓';
       return '↕';
@@ -701,7 +691,7 @@ export function renderDashboard() {
 
       contentEl.innerHTML = [
         '<div class="helper-row" style="padding:16px 16px 0;">',
-        '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[sortBy.value] + '</span></div>',
+        '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[currentSort] + '</span></div>',
         '</div>',
         '<table>',
         '<thead><tr>' +
@@ -764,7 +754,7 @@ export function renderDashboard() {
       }
     }
 
-    [searchInput, statusFilter, bankFilter, sortBy].forEach((el) => {
+    [searchInput, statusFilter, bankFilter].forEach((el) => {
       el.addEventListener('input', applyFilters);
       el.addEventListener('change', applyFilters);
     });
