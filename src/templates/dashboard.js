@@ -421,7 +421,7 @@ export function renderDashboard() {
 
     <section class="panel">
       <div class="toolbar">
-        <input id="searchInput" class="field" type="search" placeholder="搜索银行 / 卡名 / 卡号尾号" />
+        <input id="searchInput" class="field" type="search" placeholder="搜索银行 / 卡片名称 / 卡号尾号" />
         <select id="statusFilter" class="field">
           <option value="all">全部状态</option>
           <option value="unpaid">仅待还款</option>
@@ -520,7 +520,7 @@ export function renderDashboard() {
         card.bankName,
         card.cardName,
         card.cardNumber,
-        String(card.cardNumber).slice(-4),
+        card.cardNumberLast4,
         card.repaymentDateText
       ].join(' ').toLowerCase();
     }
@@ -601,7 +601,14 @@ export function renderDashboard() {
     }
 
     function renderCardCell(card) {
-      return '<div class="card-main"><div><div class="card-title">' + escapeHtml(card.cardName || '未命名卡片') + '</div><div class="code">尾号 ' + escapeHtml(String(card.cardNumber).slice(-4)) + '</div></div></div>';
+      return '<div class="card-main"><div><div class="card-title">' + escapeHtml(card.cardName || '未命名卡片') + '</div><div class="subtext">卡片名称</div></div></div>';
+    }
+
+    function renderCardNumberCell(card) {
+      if (!card.cardNumberLast4) {
+        return '<span class="subtext">未填写</span>';
+      }
+      return '<span class="code">尾号 ' + escapeHtml(card.cardNumberLast4) + '</span>';
     }
 
     function renderDateCell(card) {
@@ -623,7 +630,8 @@ export function renderDashboard() {
         return [
           '<tr>',
           '<td data-label="银行">' + renderBankCell(card) + '</td>',
-          '<td data-label="卡片">' + renderCardCell(card) + '</td>',
+          '<td data-label="卡片名称">' + renderCardCell(card) + '</td>',
+          '<td data-label="尾号">' + renderCardNumberCell(card) + '</td>',
           '<td data-label="账单日"><strong>' + card.billingDay + '</strong><div class="subtext">每月固定</div></td>',
           '<td data-label="还款日">' + renderDateCell(card) + '</td>',
           '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong><div class="subtext">当前最长</div></div></td>',
@@ -643,7 +651,7 @@ export function renderDashboard() {
         '  <div class="pill-row"><span class="sort-chip">当前排序：' + sortLabelMap[sortBy.value] + '</span></div>',
         '</div>',
         '<table>',
-        '<thead><tr><th>银行</th><th>卡片</th><th>账单日</th><th>还款日</th><th>免息期</th><th>状态</th></tr></thead>',
+        '<thead><tr><th>银行</th><th>卡片名称</th><th>尾号</th><th>账单日</th><th>还款日</th><th>免息期</th><th>状态</th></tr></thead>',
         '<tbody>' + rows + '</tbody>',
         '</table>'
       ].join('');

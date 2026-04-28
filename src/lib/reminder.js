@@ -32,7 +32,8 @@ export async function checkAndSendReminders(env) {
       const repaymentDate = calculateRepaymentDate(card, currentDate)
       const daysToRepayment = differenceInCalendarDays(repaymentDate, currentDate)
       if (daysToRepayment <= threshold && daysToRepayment >= 0) {
-        reminders.push(`${card.bank_name}${card.card_name}(尾号${card.card_number.slice(-4)})将在${daysToRepayment}天后(${format(repaymentDate)})到期还款`)
+        const suffix = card.card_number ? `(尾号${String(card.card_number).slice(-4)})` : ''
+        reminders.push(`${card.bank_name}${card.card_name}${suffix}将在${daysToRepayment}天后(${format(repaymentDate)})到期还款`)
       }
     }
 

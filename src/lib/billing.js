@@ -56,12 +56,15 @@ export function buildCardViewModels(cards, currentDate = new Date()) {
     const repaymentDate = calculateRepaymentDate(card, currentDate)
     const gracePeriod = calculateLongestGracePeriod(card, currentDate)
     const daysToRepayment = differenceInCalendarDays(repaymentDate, currentDate)
+    const cardNumber = card.card_number ?? ''
+    const cardNumberLast4 = String(cardNumber).trim() ? String(cardNumber).slice(-4) : ''
 
     return {
       cardId: card.card_id,
       bankName: card.bank_name,
       bankIconUrl: card.bank_icon_url,
-      cardNumber: card.card_number,
+      cardNumber,
+      cardNumberLast4,
       cardName: card.card_name,
       billingDay: card.billing_day,
       repaymentDate,
