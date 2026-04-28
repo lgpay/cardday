@@ -593,7 +593,7 @@ export function renderDashboard() {
 
     function renderBankCell(card) {
       const icon = card.bankIconUrl
-        ? '<img class="bank-icon" src="' + escapeHtml(card.bankIconUrl) + '" alt="' + escapeHtml(card.bankName) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\'">' +
+        ? '<img class="bank-icon js-bank-icon" src="' + escapeHtml(card.bankIconUrl) + '" alt="' + escapeHtml(card.bankName) + '" loading="lazy" referrerpolicy="no-referrer">' +
           '<span class="bank-fallback" style="display:none">' + escapeHtml(getBankInitial(card.bankName)) + '</span>'
         : '<span class="bank-fallback">' + escapeHtml(getBankInitial(card.bankName)) + '</span>';
 
@@ -647,6 +647,13 @@ export function renderDashboard() {
         '<tbody>' + rows + '</tbody>',
         '</table>'
       ].join('');
+
+      contentEl.querySelectorAll('.js-bank-icon').forEach((img) => {
+        img.addEventListener('error', () => {
+          img.style.display = 'none';
+          if (img.nextElementSibling) img.nextElementSibling.style.display = 'inline-flex';
+        }, { once: true });
+      });
 
       contentEl.querySelectorAll('.status-btn').forEach((btn) => {
         btn.addEventListener('click', async () => {
