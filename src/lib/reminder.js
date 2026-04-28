@@ -1,6 +1,6 @@
 import { differenceInCalendarDays, format } from '../vendor/date-fns-lite.js'
 import { calculateRepaymentDate } from './billing.js'
-import { listUnpaidCards } from './db.js'
+import { getAppSettings, listUnpaidCards } from './db.js'
 
 export async function sendQYWXMessage(env, message) {
   const tokenUrl = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${env.CORP_ID}&corpsecret=${env.CORP_SECRET}`
@@ -23,7 +23,16 @@ export async function sendQYWXMessage(env, message) {
 
 export async function checkAndSendReminders(env) {
   try {
-    const threshold = parseInt(env.REMINDER_THRESHOLD || '1', 10)
+    const settings = await getAppSettings(env).catch(() => ({
+      reminderEnabled: true,
+      reminderThreshold: parseInt(env.REMINDER_THRESHOLD || '1', 10)
+    }))
+
+    if (!settings.reminderEnabled) {
+      return
+    }
+
+    const threshold = Number.isFinite(settings.reminderThreshold) ? settings.reminderThreshold : 1
     const cards = await listUnpaidCards(env)
     const currentDate = new Date()
     const reminders = []

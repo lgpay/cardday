@@ -414,6 +414,39 @@ export function renderDashboard() {
       flex-wrap: wrap;
     }
 
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .status-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+
+    .status-item strong {
+      font-size: 14px;
+    }
+
+    .status-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .legend {
       display: flex;
       flex-wrap: wrap;
@@ -621,6 +654,7 @@ export function renderDashboard() {
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
@@ -676,6 +710,7 @@ export function renderDashboard() {
         </select>
         <button id="manageBanksBtn" class="button secondary" type="button">银行管理</button>
         <button id="newCardBtn" class="button secondary" type="button">新增卡片</button>
+        <button id="reminderSettingsBtn" class="button secondary" type="button">提醒设置</button>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
       <div class="helper-row">
@@ -779,6 +814,39 @@ export function renderDashboard() {
           <div id="bankList" class="bank-list"></div>
         </div>
       </div>
+
+      <div id="reminderPanel" class="form-panel">
+        <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="section-title">提醒规则</h3>
+          <div class="config-grid">
+            <div class="field-group">
+              <label for="reminderEnabledInput">提醒开关</label>
+              <select id="reminderEnabledInput" class="field">
+                <option value="1">开启</option>
+                <option value="0">关闭</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="reminderThresholdInput">提前提醒天数</label>
+              <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
+              <div id="reminderThresholdError" class="field-error"></div>
+            </div>
+          </div>
+          <div class="status-note">每天上午 9 点执行提醒任务。设置为 3 表示：到期前 3 天内（含当天）会进入提醒范围。</div>
+        </div>
+
+        <div class="modal-section">
+          <h3 class="section-title">企业微信发送状态</h3>
+          <div id="reminderEnvStatus" class="status-stack"></div>
+          <div class="status-note">这里只展示 Worker 环境变量是否已配置，具体密钥不会在页面显示。</div>
+        </div>
+
+        <div class="actions-row">
+          <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
+          <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
+          <button id="saveReminderBtn" class="button" type="button">保存设置</button>
+        </div>
+      </div>
     </section>
 
     <section class="table-wrap">
@@ -810,12 +878,14 @@ export function renderDashboard() {
     const bankFilter = document.getElementById('bankFilter');
     const manageBanksBtn = document.getElementById('manageBanksBtn');
     const newCardBtn = document.getElementById('newCardBtn');
+    const reminderSettingsBtn = document.getElementById('reminderSettingsBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
     const summaryGrid = document.getElementById('summaryGrid');
     const formPanel = document.getElementById('formPanel');
     const bankPanel = document.getElementById('bankPanel');
+    const reminderPanel = document.getElementById('reminderPanel');
     const modalShell = document.getElementById('modalShell');
     const modalBody = document.getElementById('modalBody');
     const modalTitle = document.getElementById('modalTitle');
@@ -846,6 +916,13 @@ export function renderDashboard() {
     const cancelBankBtn = document.getElementById('cancelBankBtn');
     const saveBankBtn = document.getElementById('saveBankBtn');
     const bankList = document.getElementById('bankList');
+    const reminderEnabledInput = document.getElementById('reminderEnabledInput');
+    const reminderThresholdInput = document.getElementById('reminderThresholdInput');
+    const reminderThresholdError = document.getElementById('reminderThresholdError');
+    const reminderEnvStatus = document.getElementById('reminderEnvStatus');
+    const cancelReminderBtn = document.getElementById('cancelReminderBtn');
+    const testReminderBtn = document.getElementById('testReminderBtn');
+    const saveReminderBtn = document.getElementById('saveReminderBtn');
 
     let allItems = [];
     let filteredItems = [];
@@ -855,6 +932,7 @@ export function renderDashboard() {
     let banksCache = [];
     let editingCardId = null;
     let editingBankId = null;
+    let reminderSettings = null;
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -868,6 +946,7 @@ export function renderDashboard() {
       modalDesc.textContent = desc;
       formPanel.classList.remove('show');
       bankPanel.classList.remove('show');
+      reminderPanel.classList.remove('show');
       panelEl.classList.add('show');
       modalBody.innerHTML = '';
       modalBody.appendChild(panelEl);
@@ -1078,6 +1157,16 @@ export function renderDashboard() {
       return ok;
     }
 
+    function validateReminderForm() {
+      clearError(reminderThresholdInput, reminderThresholdError);
+      const value = Number(reminderThresholdInput.value);
+      if (!Number.isInteger(value) || value < 0 || value > 30) {
+        setError(reminderThresholdInput, reminderThresholdError, '提前提醒天数需在 0-30 之间');
+        return false;
+      }
+      return true;
+    }
+
     function updateRuleInputs() {
       const useGraceDays = ruleTypeSelect.value === 'graceDays';
       graceDaysInput.disabled = !useGraceDays;
@@ -1116,6 +1205,33 @@ export function renderDashboard() {
       saveBankBtn.textContent = '保存银行';
       bankNameInput.value = '';
       bankIconUrlInput.value = '';
+    }
+
+    function renderReminderEnvStatus(status) {
+      const items = [
+        ['CORP_ID', status && status.corpIdConfigured],
+        ['CORP_SECRET', status && status.corpSecretConfigured],
+        ['AGENT_ID', status && status.agentIdConfigured],
+        ['TO_USER', status && status.toUserConfigured]
+      ];
+      reminderEnvStatus.innerHTML = items.map(([label, ok]) => {
+        const badge = ok ? '<span class="badge ok">已配置</span>' : '<span class="badge danger">未配置</span>';
+        return '<div class="status-item"><strong>' + label + '</strong>' + badge + '</div>';
+      }).join('');
+    }
+
+    function fillReminderForm(item) {
+      reminderSettings = item || null;
+      reminderEnabledInput.value = item && item.reminderEnabled ? '1' : '0';
+      reminderThresholdInput.value = item && Number.isFinite(Number(item.reminderThreshold)) ? String(item.reminderThreshold) : '1';
+      renderReminderEnvStatus(item && item.envStatus ? item.envStatus : null);
+    }
+
+    async function loadReminderSettings() {
+      const res = await fetch('/api/reminder-settings', { headers: { 'Accept': 'application/json' } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '加载提醒设置失败');
+      fillReminderForm(data.item || null);
     }
 
     function renderBankList() {
@@ -1232,6 +1348,52 @@ export function renderDashboard() {
       } finally {
         saveBankBtn.disabled = false;
         saveBankBtn.textContent = editingBankId ? '保存修改' : '保存银行';
+      }
+    }
+
+    async function saveReminderSettings() {
+      sanitizeDigitsInput(reminderThresholdInput, 2);
+      if (!validateReminderForm()) {
+        showToast('先把提醒设置填对');
+        return;
+      }
+      saveReminderBtn.disabled = true;
+      saveReminderBtn.textContent = '保存中...';
+      try {
+        const res = await fetch('/api/reminder-settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reminderEnabled: reminderEnabledInput.value === '1',
+            reminderThreshold: Number(reminderThresholdInput.value)
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '保存失败');
+        fillReminderForm({ ...(reminderSettings || {}), ...(data.item || {}) });
+        showToast('提醒设置已保存');
+        closeModal();
+      } catch (err) {
+        showToast(err.message || '保存失败');
+      } finally {
+        saveReminderBtn.disabled = false;
+        saveReminderBtn.textContent = '保存设置';
+      }
+    }
+
+    async function testReminder() {
+      testReminderBtn.disabled = true;
+      testReminderBtn.textContent = '试发中...';
+      try {
+        const res = await fetch('/api/reminder-settings/test', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '试发失败');
+        showToast('已触发一次提醒检查');
+      } catch (err) {
+        showToast(err.message || '试发失败');
+      } finally {
+        testReminderBtn.disabled = false;
+        testReminderBtn.textContent = '立即试发';
       }
     }
 
@@ -1480,11 +1642,11 @@ export function renderDashboard() {
     syncQuickFilters();
     updateRuleInputs();
 
-    [cardNumberInput, billingDayInput, repaymentDayInput, graceDaysInput].forEach((inputEl) => {
+    [cardNumberInput, billingDayInput, repaymentDayInput, graceDaysInput, reminderThresholdInput].forEach((inputEl) => {
       inputEl.addEventListener('input', () => sanitizeDigitsInput(inputEl, inputEl === cardNumberInput ? 16 : 2));
     });
 
-    [cardNameInput, bankSelect, billingDayInput, repaymentDayInput, graceDaysInput, bankNameInput, bankIconUrlInput].forEach((inputEl) => {
+    [cardNameInput, bankSelect, billingDayInput, repaymentDayInput, graceDaysInput, bankNameInput, bankIconUrlInput, reminderThresholdInput].forEach((inputEl) => {
       inputEl.addEventListener('input', () => {
         const map = new Map([
           [cardNameInput, cardNameError],
@@ -1493,13 +1655,25 @@ export function renderDashboard() {
           [repaymentDayInput, repaymentDayError],
           [graceDaysInput, graceDaysError],
           [bankNameInput, bankNameError],
-          [bankIconUrlInput, bankIconUrlError]
+          [bankIconUrlInput, bankIconUrlError],
+          [reminderThresholdInput, reminderThresholdError]
         ]);
         clearError(inputEl, map.get(inputEl));
       });
     });
 
     ruleTypeSelect.addEventListener('change', updateRuleInputs);
+    reminderSettingsBtn.addEventListener('click', async () => {
+      try {
+        await loadReminderSettings();
+      } catch (err) {
+        showToast(err.message || '加载提醒设置失败');
+        return;
+      }
+      openModal('提醒设置', '把提醒开关、提前天数和发送环境状态集中放到这里。', reminderPanel);
+      reminderThresholdInput.focus();
+    });
+
     manageBanksBtn.addEventListener('click', async () => {
       try {
         await loadBanks();
@@ -1534,6 +1708,12 @@ export function renderDashboard() {
       closeModal();
     });
     saveBankBtn.addEventListener('click', saveBank);
+    cancelReminderBtn.addEventListener('click', () => {
+      reminderPanel.classList.remove('show');
+      closeModal();
+    });
+    saveReminderBtn.addEventListener('click', saveReminderSettings);
+    testReminderBtn.addEventListener('click', testReminder);
 
     cancelCardBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');
@@ -1545,6 +1725,7 @@ export function renderDashboard() {
     closeModalBtn.addEventListener('click', () => {
       formPanel.classList.remove('show');
       bankPanel.classList.remove('show');
+      reminderPanel.classList.remove('show');
       resetCardForm();
       resetBankForm();
       closeModal();

@@ -4,6 +4,7 @@ const SELECT_BILLING_DAYS = 'SELECT card_id, billing_day FROM credit_cards'
 const SELECT_BANKS = 'SELECT bank_id, bank_name, bank_icon_url FROM banks ORDER BY bank_id'
 const SELECT_BANK_BY_ID = 'SELECT bank_id, bank_name, bank_icon_url FROM banks WHERE bank_id = ?'
 const SELECT_CARD_BY_ID = 'SELECT card_id, bank_id, card_name, card_number, billing_day, is_next_period, grace_type, grace_days, repayment_day, repaid FROM credit_cards WHERE card_id = ?'
+const SELECT_SETTINGS = 'SELECT setting_key, setting_value FROM app_settings'
 
 export async function listCards(env) {
   const { results } = await env.DB.prepare(SELECT_ALL_CARDS).all()
@@ -22,6 +23,11 @@ export async function listCardBillingDays(env) {
 
 export async function listBanks(env) {
   const { results } = await env.DB.prepare(SELECT_BANKS).all()
+  return results
+}
+
+export async function listSettings(env) {
+  const { results } = await env.DB.prepare(SELECT_SETTINGS).all()
   return results
 }
 
@@ -56,6 +62,27 @@ export async function deleteBank(env, bankId) {
     throw new Error('该银行下仍有关联卡片，不能删除')
   }
   return env.DB.prepare('DELETE FROM banks WHERE bank_id = ?').bind(bankId).run()
+}
+
+export async function getAppSettings(env) {
+  const rows = await listSettings(env)
+  const map = Object.fromEntries(rows.map((row) => [row.setting_key, row.setting_value]))
+  return {
+    reminderEnabled: map.reminder_enabled !== '0',
+    reminderThreshold: Number(map.reminder_threshold || '1')
+  }
+}
+
+export async function upsertAppSetting(env, key, value) {
+  return env.DB.prepare(
+    'INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value'
+  ).bind(key, String(value)).run()
+}
+
+export async function updateReminderSettings(env, input) {
+  await upsertAppSetting(env, 'reminder_enabled', input.reminderEnabled ? '1' : '0')
+  await upsertAppSetting(env, 'reminder_threshold', input.reminderThreshold)
+  return getAppSettings(env)
 }
 
 export async function createCard(env, input) {

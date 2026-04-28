@@ -4,6 +4,7 @@ import {
   createCard,
   deleteBank,
   deleteCard,
+  getAppSettings,
   getBankById,
   getCardById,
   listBanks,
@@ -11,6 +12,7 @@ import {
   listCardBillingDays,
   updateBank,
   updateCard,
+  updateReminderSettings,
   updateRepaidStatus
 } from './lib/db.js'
 import { buildCardViewModels } from './lib/billing.js'
@@ -41,6 +43,15 @@ function normalizeBankPayload(payload = {}) {
   if (!bankName) throw new Error('bankName 不能为空')
 
   return { bankName, bankIconUrl }
+}
+
+function normalizeReminderPayload(payload = {}) {
+  const reminderEnabled = payload.reminderEnabled !== false && payload.reminderEnabled !== 0 && payload.reminderEnabled !== '0'
+  const reminderThreshold = Number(payload.reminderThreshold)
+  if (!Number.isInteger(reminderThreshold) || reminderThreshold < 0 || reminderThreshold > 30) {
+    throw new Error('reminderThreshold 需在 0-30 之间')
+  }
+  return { reminderEnabled, reminderThreshold }
 }
 
 function normalizeCardPayload(payload = {}) {
@@ -110,6 +121,33 @@ async function handleCardsApi(env) {
 async function handleBanksApi(env) {
   const banks = await listBanks(env)
   return json({ items: banks })
+}
+
+async function handleReminderSettingsApi(env) {
+  const settings = await getAppSettings(env)
+  return json({
+    item: {
+      ...settings,
+      envStatus: {
+        corpIdConfigured: !!env.CORP_ID,
+        corpSecretConfigured: !!env.CORP_SECRET,
+        agentIdConfigured: !!env.AGENT_ID,
+        toUserConfigured: !!env.TO_USER
+      }
+    }
+  })
+}
+
+async function handleUpdateReminderSettings(request, env) {
+  const payload = await request.json()
+  const input = normalizeReminderPayload(payload)
+  const item = await updateReminderSettings(env, input)
+  return json({ success: true, item })
+}
+
+async function handleReminderTest(env) {
+  await checkAndSendReminders(env)
+  return json({ success: true })
 }
 
 async function handleCreateBank(request, env) {
@@ -197,39 +235,39 @@ export default {
       if (request.method === 'GET' && url.pathname === '/api/cards') {
         return await handleCardsApi(env)
       }
-
       if (request.method === 'GET' && url.pathname === '/api/banks') {
         return await handleBanksApi(env)
       }
-
+      if (request.method === 'GET' && url.pathname === '/api/reminder-settings') {
+        return await handleReminderSettingsApi(env)
+      }
+      if (request.method === 'POST' && url.pathname === '/api/reminder-settings/test') {
+        return await handleReminderTest(env)
+      }
+      if (request.method === 'PUT' && url.pathname === '/api/reminder-settings') {
+        return await handleUpdateReminderSettings(request, env)
+      }
       if (request.method === 'POST' && url.pathname === '/api/banks') {
         return await handleCreateBank(request, env)
       }
-
       if (request.method === 'PUT' && bankIdMatch) {
         return await handleUpdateBank(request, env, Number(bankIdMatch[1]))
       }
-
       if (request.method === 'DELETE' && bankIdMatch) {
         return await handleDeleteBank(env, Number(bankIdMatch[1]))
       }
-
       if (request.method === 'POST' && url.pathname === '/api/cards') {
         return await handleCreateCard(request, env)
       }
-
       if (request.method === 'PUT' && cardIdMatch) {
         return await handleUpdateCard(request, env, Number(cardIdMatch[1]))
       }
-
       if (request.method === 'DELETE' && cardIdMatch) {
         return await handleDeleteCard(env, Number(cardIdMatch[1]))
       }
-
       if (request.method === 'POST' && url.pathname === '/api/toggle-repaid') {
         return await handleToggleRepaid(request, env)
       }
-
       return await handleIndex()
     } catch (error) {
       return json({ error: error.message || '服务器错误' }, { status: 500 })

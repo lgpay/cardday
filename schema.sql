@@ -17,3 +17,11 @@ CREATE TABLE IF NOT EXISTS credit_cards (
   repaid INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (bank_id) REFERENCES banks(bank_id)
 );
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  setting_key TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('reminder_enabled', '1');
+INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES ('reminder_threshold', '1');
