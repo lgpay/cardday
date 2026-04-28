@@ -832,6 +832,10 @@ export function renderDashboard() {
     function openModal(title, desc, panelEl) {
       modalTitle.textContent = title;
       modalDesc.textContent = desc;
+      formPanel.classList.remove('show');
+      bankPanel.classList.remove('show');
+      panelEl.classList.add('show');
+      modalBody.innerHTML = '';
       modalBody.appendChild(panelEl);
       modalShell.classList.add('show');
       modalShell.setAttribute('aria-hidden', 'false');
@@ -1104,7 +1108,7 @@ export function renderDashboard() {
           editingBankId = bank.bank_id;
           manageBanksBtn.textContent = '编辑银行';
           saveBankBtn.textContent = '保存修改';
-          bankPanel.classList.add('show');
+          openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
           bankNameInput.value = bank.bank_name || '';
           bankIconUrlInput.value = bank.bank_icon_url || '';
           bankNameInput.focus();
@@ -1134,7 +1138,6 @@ export function renderDashboard() {
       editingCardId = null;
       newCardBtn.textContent = '新增卡片';
       saveCardBtn.textContent = '保存卡片';
-      formPanel.classList.add('show');
       openModal('新增卡片', '集中填写卡片基础信息和还款规则。', formPanel);
       cardNameInput.focus();
     }
@@ -1143,7 +1146,6 @@ export function renderDashboard() {
       editingCardId = card.cardId;
       newCardBtn.textContent = '编辑中';
       saveCardBtn.textContent = '保存修改';
-      formPanel.classList.add('show');
       openModal('编辑卡片', '修改卡片基础信息、账单日和还款规则。', formPanel);
       cardNameInput.value = card.cardName || '';
       const bank = banksCache.find(item => item.bank_name === card.bankName);
@@ -1473,7 +1475,6 @@ export function renderDashboard() {
       }
       formPanel.classList.remove('show');
       resetCardForm();
-      bankPanel.classList.add('show');
       resetBankForm();
       openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
       bankNameInput.focus();
