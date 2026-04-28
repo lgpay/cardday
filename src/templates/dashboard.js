@@ -136,7 +136,7 @@ export function renderDashboard() {
 
     .toolbar {
       display: grid;
-      grid-template-columns: 1.4fr repeat(2, minmax(140px, 0.5fr)) auto;
+      grid-template-columns: 1.4fr repeat(2, minmax(140px, 0.5fr)) auto auto;
       gap: 12px;
       margin-bottom: 16px;
       align-items: center;
@@ -145,6 +145,58 @@ export function renderDashboard() {
     .panel {
       padding: 16px;
       margin-bottom: 16px;
+    }
+
+    .form-panel {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .form-panel.show {
+      display: block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .field-group.full {
+      grid-column: span 2;
+    }
+
+    .switch-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .switch-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 14px;
     }
 
     .field,
@@ -392,6 +444,7 @@ export function renderDashboard() {
     @media (max-width: 1024px) {
       .hero { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 760px) {
@@ -400,6 +453,8 @@ export function renderDashboard() {
       h1 { font-size: 28px; }
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field-group.full { grid-column: span 1; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
       tbody { padding: 8px; }
@@ -460,6 +515,7 @@ export function renderDashboard() {
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
         </select>
+        <button id="newCardBtn" class="button secondary" type="button">新增卡片</button>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
       <div class="helper-row">
@@ -470,6 +526,50 @@ export function renderDashboard() {
           <button class="badge idle js-quick-filter" data-filter="unexpired" type="button">未到期</button>
         </div>
         <div id="resultHint">准备加载数据…</div>
+      </div>
+
+      <div id="formPanel" class="form-panel">
+        <div class="form-grid">
+          <div class="field-group full">
+            <label for="cardNameInput">卡片名称</label>
+            <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
+          </div>
+          <div class="field-group">
+            <label for="bankSelect">银行</label>
+            <select id="bankSelect" class="field"><option value="">选择银行</option></select>
+          </div>
+          <div class="field-group">
+            <label for="cardNumberInput">尾号（非必填）</label>
+            <input id="cardNumberInput" class="field" type="text" placeholder="如 8203" maxlength="16" />
+          </div>
+          <div class="field-group">
+            <label for="billingDayInput">账单日</label>
+            <input id="billingDayInput" class="field" type="number" min="1" max="28" placeholder="1-28" />
+          </div>
+          <div class="field-group">
+            <label for="ruleTypeSelect">还款规则</label>
+            <select id="ruleTypeSelect" class="field">
+              <option value="repaymentDay">固定还款日</option>
+              <option value="graceDays">账单日后 N 天</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="repaymentDayInput">还款日</label>
+            <input id="repaymentDayInput" class="field" type="number" min="1" max="31" placeholder="1-31" />
+          </div>
+          <div class="field-group">
+            <label for="graceDaysInput">账单后天数</label>
+            <input id="graceDaysInput" class="field" type="number" min="1" max="99" placeholder="如 20" disabled />
+          </div>
+        </div>
+        <div class="switch-row">
+          <label><input id="isNextPeriodInput" type="checkbox" /> 下个账期生效</label>
+          <label><input id="repaidInput" type="checkbox" /> 标记为已还款</label>
+        </div>
+        <div class="actions-row">
+          <button id="cancelCardBtn" class="button secondary" type="button">取消</button>
+          <button id="saveCardBtn" class="button" type="button">保存卡片</button>
+        </div>
       </div>
     </section>
 
@@ -487,15 +587,29 @@ export function renderDashboard() {
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const bankFilter = document.getElementById('bankFilter');
+    const newCardBtn = document.getElementById('newCardBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
     const summaryGrid = document.getElementById('summaryGrid');
+    const formPanel = document.getElementById('formPanel');
+    const bankSelect = document.getElementById('bankSelect');
+    const cardNameInput = document.getElementById('cardNameInput');
+    const cardNumberInput = document.getElementById('cardNumberInput');
+    const billingDayInput = document.getElementById('billingDayInput');
+    const ruleTypeSelect = document.getElementById('ruleTypeSelect');
+    const repaymentDayInput = document.getElementById('repaymentDayInput');
+    const graceDaysInput = document.getElementById('graceDaysInput');
+    const isNextPeriodInput = document.getElementById('isNextPeriodInput');
+    const repaidInput = document.getElementById('repaidInput');
+    const cancelCardBtn = document.getElementById('cancelCardBtn');
+    const saveCardBtn = document.getElementById('saveCardBtn');
 
     let allItems = [];
     let filteredItems = [];
     let lastMeta = null;
     let currentSort = 'daysToRepaymentAsc';
+    let banksCache = [];
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -553,6 +667,11 @@ export function renderDashboard() {
       const current = bankFilter.value;
       bankFilter.innerHTML = '<option value="all">全部银行</option>' + banks.map(name => '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>').join('');
       if (banks.includes(current)) bankFilter.value = current;
+    }
+
+    function fillBankOptions(items) {
+      banksCache = Array.isArray(items) ? items : [];
+      bankSelect.innerHTML = '<option value="">选择银行</option>' + banksCache.map(item => '<option value="' + item.bank_id + '">' + escapeHtml(item.bank_name) + '</option>').join('');
     }
 
     function updateSummary(items) {
@@ -621,6 +740,72 @@ export function renderDashboard() {
       if (current === field + 'Asc') return '↑';
       if (current === field + 'Desc') return '↓';
       return '↕';
+    }
+
+    function updateRuleInputs() {
+      const useGraceDays = ruleTypeSelect.value === 'graceDays';
+      graceDaysInput.disabled = !useGraceDays;
+      repaymentDayInput.disabled = useGraceDays;
+      if (useGraceDays) {
+        repaymentDayInput.value = '';
+      } else {
+        graceDaysInput.value = '';
+      }
+    }
+
+    function resetCardForm() {
+      cardNameInput.value = '';
+      bankSelect.value = '';
+      cardNumberInput.value = '';
+      billingDayInput.value = '';
+      ruleTypeSelect.value = 'repaymentDay';
+      repaymentDayInput.value = '';
+      graceDaysInput.value = '';
+      isNextPeriodInput.checked = false;
+      repaidInput.checked = false;
+      updateRuleInputs();
+    }
+
+    async function loadBanks() {
+      const res = await fetch('/api/banks', { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error('加载银行失败');
+      const data = await res.json();
+      fillBankOptions(data.items || []);
+    }
+
+    async function saveCard() {
+      const payload = {
+        bankId: Number(bankSelect.value),
+        cardName: cardNameInput.value.trim(),
+        cardNumber: cardNumberInput.value.trim(),
+        billingDay: Number(billingDayInput.value),
+        isNextPeriod: isNextPeriodInput.checked,
+        graceType: ruleTypeSelect.value === 'graceDays' ? 1 : 0,
+        graceDays: graceDaysInput.value,
+        repaymentDay: repaymentDayInput.value,
+        repaid: repaidInput.checked
+      };
+
+      saveCardBtn.disabled = true;
+      saveCardBtn.textContent = '保存中...';
+      try {
+        const res = await fetch('/api/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || '保存失败');
+        showToast('卡片已新增');
+        formPanel.classList.remove('show');
+        resetCardForm();
+        await loadCards(false);
+      } catch (err) {
+        showToast(err.message || '保存失败');
+      } finally {
+        saveCardBtn.disabled = false;
+        saveCardBtn.textContent = '保存卡片';
+      }
     }
 
     function syncQuickFilters() {
@@ -777,9 +962,32 @@ export function renderDashboard() {
 
     bindQuickFilters();
     syncQuickFilters();
+    updateRuleInputs();
+
+    ruleTypeSelect.addEventListener('change', updateRuleInputs);
+    newCardBtn.addEventListener('click', async () => {
+      if (!banksCache.length) {
+        try {
+          await loadBanks();
+        } catch (err) {
+          showToast(err.message || '加载银行失败');
+          return;
+        }
+      }
+      formPanel.classList.toggle('show');
+      if (formPanel.classList.contains('show')) {
+        cardNameInput.focus();
+      }
+    });
+    cancelCardBtn.addEventListener('click', () => {
+      formPanel.classList.remove('show');
+      resetCardForm();
+    });
+    saveCardBtn.addEventListener('click', saveCard);
 
     refreshBtn.addEventListener('click', () => loadCards(false));
 
+    loadBanks().catch(() => {});
     loadCards();
   </script>
 </body>

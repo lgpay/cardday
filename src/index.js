@@ -1,44 +1,131 @@
 import { getCorsHeaders } from './lib/http.js'
-import { listCards, listCardBillingDays, updateRepaidStatus } from './lib/db.js'
+import {
+  createCard,
+  deleteCard,
+  getCardById,
+  listBanks,
+  listCards,
+  listCardBillingDays,
+  updateCard,
+  updateRepaidStatus
+} from './lib/db.js'
 import { buildCardViewModels } from './lib/billing.js'
 import { checkAndSendReminders } from './lib/reminder.js'
 import { renderDashboard } from './templates/dashboard.js'
 
-async function handleToggleRepaid(request, env) {
+function json(data, init = {}) {
   const corsHeaders = getCorsHeaders()
+  return new Response(JSON.stringify(data), {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...corsHeaders,
+      ...(init.headers || {})
+    }
+  })
+}
+
+function badRequest(message) {
+  return json({ error: message }, { status: 400 })
+}
+
+function normalizeCardPayload(payload = {}) {
+  const bankId = Number(payload.bankId)
+  const billingDay = Number(payload.billingDay)
+  const isNextPeriod = payload.isNextPeriod ? 1 : 0
+  const graceType = payload.graceType === 1 || payload.graceType === '1' || payload.graceType === true ? 1 : 0
+  const cardName = String(payload.cardName || '').trim()
+  const rawCardNumber = payload.cardNumber == null ? '' : String(payload.cardNumber).trim()
+  const cardNumber = rawCardNumber || null
+  const repaid = payload.repaid ? 1 : 0
+  const graceDays = payload.graceDays === '' || payload.graceDays == null ? null : Number(payload.graceDays)
+  const repaymentDay = payload.repaymentDay === '' || payload.repaymentDay == null ? null : Number(payload.repaymentDay)
+
+  if (!Number.isInteger(bankId) || bankId <= 0) throw new Error('bankId 不合法')
+  if (!cardName) throw new Error('cardName 不能为空')
+  if (!Number.isInteger(billingDay) || billingDay < 1 || billingDay > 28) throw new Error('billingDay 需在 1-28 之间')
+
+  if (graceType) {
+    if (!Number.isInteger(graceDays) || graceDays < 1 || graceDays > 99) {
+      throw new Error('graceDays 需为 1-99')
+    }
+  } else {
+    if (!Number.isInteger(repaymentDay) || repaymentDay < 1 || repaymentDay > 31) {
+      throw new Error('repaymentDay 需为 1-31')
+    }
+  }
+
+  return {
+    bankId,
+    cardName,
+    cardNumber,
+    billingDay,
+    isNextPeriod,
+    graceType,
+    graceDays: graceType ? graceDays : null,
+    repaymentDay: graceType ? null : repaymentDay,
+    repaid
+  }
+}
+
+async function handleToggleRepaid(request, env) {
   const payload = await request.json()
   const cardId = Number(payload?.cardId)
   const repaid = payload?.repaid ? 1 : 0
 
   if (!Number.isInteger(cardId) || cardId <= 0) {
-    return new Response(JSON.stringify({ error: 'cardId 不合法' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
-    })
+    return badRequest('cardId 不合法')
   }
 
   await updateRepaidStatus(env, cardId, repaid)
-  return new Response(JSON.stringify({ success: true, cardId, repaid }), {
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
-  })
+  return json({ success: true, cardId, repaid })
 }
 
 async function handleCardsApi(env) {
-  const corsHeaders = getCorsHeaders()
   const cards = await listCards(env)
   const cardInfo = buildCardViewModels(cards)
-  return new Response(JSON.stringify({
+  return json({
     items: cardInfo,
     meta: {
       count: cardInfo.length,
       generatedAt: new Date().toISOString()
     }
-  }), {
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
   })
 }
 
-async function handleIndex(env) {
+async function handleBanksApi(env) {
+  const banks = await listBanks(env)
+  return json({ items: banks })
+}
+
+async function handleCreateCard(request, env) {
+  const payload = await request.json()
+  const input = normalizeCardPayload(payload)
+  const cardId = await createCard(env, input)
+  const card = await getCardById(env, cardId)
+  return json({ success: true, item: card }, { status: 201 })
+}
+
+async function handleUpdateCard(request, env, cardId) {
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return badRequest('cardId 不合法')
+  }
+  const payload = await request.json()
+  const input = normalizeCardPayload(payload)
+  await updateCard(env, cardId, input)
+  const card = await getCardById(env, cardId)
+  return json({ success: true, item: card })
+}
+
+async function handleDeleteCard(env, cardId) {
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return badRequest('cardId 不合法')
+  }
+  await deleteCard(env, cardId)
+  return json({ success: true, cardId })
+}
+
+async function handleIndex() {
   const corsHeaders = getCorsHeaders()
   return new Response(renderDashboard(), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders }
@@ -58,40 +145,40 @@ export default {
   async fetch(request, env) {
     const corsHeaders = getCorsHeaders()
     const url = new URL(request.url)
+    const cardIdMatch = url.pathname.match(/^\/api\/cards\/(\d+)$/)
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders })
     }
 
-    if (request.method === 'GET' && url.pathname === '/api/cards') {
-      try {
-        return await handleCardsApi(env)
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
-        })
-      }
-    }
-
-    if (request.method === 'POST' && url.pathname === '/api/toggle-repaid') {
-      try {
-        return await handleToggleRepaid(request, env)
-      } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders }
-        })
-      }
-    }
-
     try {
-      return await handleIndex(env)
+      if (request.method === 'GET' && url.pathname === '/api/cards') {
+        return await handleCardsApi(env)
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/banks') {
+        return await handleBanksApi(env)
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/cards') {
+        return await handleCreateCard(request, env)
+      }
+
+      if (request.method === 'PUT' && cardIdMatch) {
+        return await handleUpdateCard(request, env, Number(cardIdMatch[1]))
+      }
+
+      if (request.method === 'DELETE' && cardIdMatch) {
+        return await handleDeleteCard(env, Number(cardIdMatch[1]))
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/toggle-repaid') {
+        return await handleToggleRepaid(request, env)
+      }
+
+      return await handleIndex()
     } catch (error) {
-      return new Response(`Error: ${error.message}`, {
-        status: 500,
-        headers: corsHeaders
-      })
+      return json({ error: error.message || '服务器错误' }, { status: 500 })
     }
   },
 
