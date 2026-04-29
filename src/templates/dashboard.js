@@ -871,7 +871,7 @@ export function renderDashboard() {
         <div class="modal-section">
           <h3 class="section-title">企业微信发送状态</h3>
           <div id="reminderEnvStatus" class="status-stack"></div>
-          <div class="status-note">这里只展示 Worker 环境变量是否已配置，具体密钥不会在页面显示。</div>
+          <div class="status-note">这里展示的是当前实际发送模式、关键参数是否已就绪，以及如果缺配置时缺的是哪一项；具体密钥内容不会在页面显示。</div>
         </div>
 
         <div class="actions-row">
@@ -1244,17 +1244,26 @@ export function renderDashboard() {
     }
 
     function renderReminderEnvStatus(status) {
+      const envStatus = status && status.envStatus ? status.envStatus : status;
       const items = [
-        ['企业 ID', status && status.corpIdConfigured],
-        ['应用 Secret', status && status.corpSecretConfigured],
-        ['应用 AgentId', status && status.agentIdConfigured],
-        ['接收对象', status && status.toUserConfigured],
-        ['代理地址', status && status.proxyUrlConfigured]
+        ['发送模式', status && status.modeLabel ? status.modeLabel : '直连模式'],
+        ['企业 ID', envStatus && envStatus.corpIdConfigured],
+        ['应用 Secret', envStatus && envStatus.corpSecretConfigured],
+        ['应用 AgentId', envStatus && envStatus.agentIdConfigured],
+        ['接收对象', envStatus && envStatus.toUserConfigured],
+        ['代理地址', envStatus && envStatus.proxyUrlConfigured]
       ];
-      reminderEnvStatus.innerHTML = items.map(([label, ok]) => {
-        const badge = ok ? '<span class="badge ok">已配置</span>' : '<span class="badge danger">未配置</span>';
+      const rows = items.map(([label, value], index) => {
+        if (index === 0) {
+          return '<div class="status-item"><strong>' + label + '</strong><span class="badge">' + escapeHtml(String(value || '直连模式')) + '</span></div>';
+        }
+        const badge = value ? '<span class="badge ok">已配置</span>' : '<span class="badge danger">未配置</span>';
         return '<div class="status-item"><strong>' + label + '</strong>' + badge + '</div>';
-      }).join('');
+      });
+      if (status && Array.isArray(status.missingFields) && status.missingFields.length) {
+        rows.push('<div class="status-item"><strong>当前缺项</strong><span class="badge danger">' + escapeHtml(status.missingFields.join(' / ')) + '</span></div>');
+      }
+      reminderEnvStatus.innerHTML = rows.join('');
     }
 
     function fillReminderForm(item) {
@@ -1266,7 +1275,7 @@ export function renderDashboard() {
       qywxToUserInput.value = item && item.qywxToUser ? item.qywxToUser : '';
       qywxCorpSecretInput.value = '';
       qywxProxyUrlInput.value = item && item.qywxProxyUrl ? item.qywxProxyUrl : '';
-      renderReminderEnvStatus(item && item.envStatus ? item.envStatus : null);
+      renderReminderEnvStatus(item && item.channelStatus ? item.channelStatus : (item && item.envStatus ? item.envStatus : null));
     }
 
     async function loadReminderSettings() {
@@ -1435,7 +1444,7 @@ export function renderDashboard() {
         const res = await fetch('/api/reminder-settings/test', { method: 'POST' });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || '试发失败');
-        showToast('已触发一次提醒检查');
+        showToast(data.message || '已触发一次提醒检查');
       } catch (err) {
         showToast(err.message || '试发失败');
       } finally {

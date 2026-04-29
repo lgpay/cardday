@@ -2,6 +2,13 @@ import { differenceInCalendarDays, format } from '../vendor/date-fns-lite.js'
 import { calculateRepaymentDate } from './billing.js'
 import { getAppSettings, listUnpaidCards } from './db.js'
 
+const QYWX_FIELD_LABELS = {
+  corpId: '企业 ID',
+  corpSecret: '应用 Secret',
+  agentId: '应用 AgentId',
+  toUser: '接收对象'
+}
+
 function getQywxConfig(env, settings = null) {
   return {
     corpId: String((settings && settings.qywxCorpId) || env.CORP_ID || '').trim(),
@@ -9,6 +16,32 @@ function getQywxConfig(env, settings = null) {
     agentId: String((settings && settings.qywxAgentId) || env.AGENT_ID || '').trim(),
     toUser: String((settings && settings.qywxToUser) || env.TO_USER || '').trim(),
     proxyUrl: String((settings && settings.qywxProxyUrl) || '').trim()
+  }
+}
+
+function getMissingQywxFields(config) {
+  return Object.entries(QYWX_FIELD_LABELS)
+    .filter(([key]) => !String(config[key] || '').trim())
+    .map(([, label]) => label)
+}
+
+export function getQywxChannelStatus(env, settings = null) {
+  const config = getQywxConfig(env, settings)
+  const mode = config.proxyUrl ? 'proxy' : 'direct'
+  const missingFields = getMissingQywxFields(config)
+
+  return {
+    mode,
+    modeLabel: mode === 'proxy' ? '代理模式' : '直连模式',
+    configured: missingFields.length === 0,
+    missingFields,
+    envStatus: {
+      corpIdConfigured: !!config.corpId,
+      corpSecretConfigured: !!config.corpSecret,
+      agentIdConfigured: !!config.agentId,
+      toUserConfigured: !!config.toUser,
+      proxyUrlConfigured: !!config.proxyUrl
+    }
   }
 }
 
@@ -20,17 +53,18 @@ function joinProxyUrl(baseUrl, path) {
 
 export async function sendQYWXMessage(env, message, settings = null) {
   const config = getQywxConfig(env, settings)
+  const status = getQywxChannelStatus(env, settings)
 
-  if (config.proxyUrl) {
-    if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
-      throw new Error('代理模式下仍需填写企业微信参数')
+  if (status.mode === 'proxy') {
+    if (status.missingFields.length) {
+      throw new Error(`代理模式缺少参数：${status.missingFields.join(' / ')}`)
     }
 
     const tokenUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/gettoken') + `?corpid=${encodeURIComponent(config.corpId)}&corpsecret=${encodeURIComponent(config.corpSecret)}`
     const tokenRes = await fetch(tokenUrl, { headers: { 'Content-Type': 'application/json' } })
     const tokenData = await tokenRes.json().catch(() => ({}))
     if (!tokenRes.ok || !tokenData.access_token) {
-      throw new Error(tokenData.errmsg || `代理获取 access_token 失败（HTTP ${tokenRes.status}）`)
+      throw new Error(tokenData.errmsg || `代理模式获取 access_token 失败（HTTP ${tokenRes.status}）`)
     }
 
     const sendUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/message/send') + `?access_token=${encodeURIComponent(tokenData.access_token)}`
@@ -48,20 +82,20 @@ export async function sendQYWXMessage(env, message, settings = null) {
     })
     const sendData = await sendRes.json().catch(() => ({}))
     if (!sendRes.ok || (sendData.errcode && sendData.errcode !== 0)) {
-      throw new Error(sendData.errmsg || `代理发送失败（HTTP ${sendRes.status}）`)
+      throw new Error(sendData.errmsg || `代理模式发送消息失败（HTTP ${sendRes.status}）`)
     }
-    return
+    return { mode: status.mode, modeLabel: status.modeLabel }
   }
 
-  if (!config.corpId || !config.corpSecret || !config.agentId || !config.toUser) {
-    throw new Error('企业微信通道参数未配置完整')
+  if (status.missingFields.length) {
+    throw new Error(`企业微信直连模式缺少参数：${status.missingFields.join(' / ')}`)
   }
 
   const tokenUrl = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${config.corpId}&corpsecret=${config.corpSecret}`
   const tokenRes = await fetch(tokenUrl)
-  const tokenData = await tokenRes.json()
+  const tokenData = await tokenRes.json().catch(() => ({}))
   if (!tokenData.access_token) {
-    throw new Error(tokenData.errmsg || '获取企业微信 access_token 失败')
+    throw new Error(tokenData.errmsg || '直连模式获取企业微信 access_token 失败')
   }
 
   const url = `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${tokenData.access_token}`
@@ -79,11 +113,15 @@ export async function sendQYWXMessage(env, message, settings = null) {
   })
   const sendData = await sendRes.json().catch(() => ({}))
   if (sendData.errcode && sendData.errcode !== 0) {
-    throw new Error(sendData.errmsg || '企业微信发送失败')
+    throw new Error(sendData.errmsg || '直连模式发送企业微信消息失败')
   }
+
+  return { mode: status.mode, modeLabel: status.modeLabel }
 }
 
-export async function checkAndSendReminders(env) {
+export async function checkAndSendReminders(env, options = {}) {
+  const { throwOnError = false } = options
+
   try {
     const settings = await getAppSettings(env).catch(() => ({
       reminderEnabled: true,
@@ -91,7 +129,7 @@ export async function checkAndSendReminders(env) {
     }))
 
     if (!settings.reminderEnabled) {
-      return
+      return { sent: false, matchedCount: 0, skippedReason: '提醒开关已关闭' }
     }
 
     const threshold = Number.isFinite(settings.reminderThreshold) ? settings.reminderThreshold : 1
@@ -108,10 +146,21 @@ export async function checkAndSendReminders(env) {
       }
     }
 
-    if (reminders.length) {
-      await sendQYWXMessage(env, `信用卡还款提醒：\n${reminders.join('\n')}`, settings)
+    if (!reminders.length) {
+      return { sent: false, matchedCount: 0, skippedReason: '当前没有进入提醒范围的未还款卡片' }
+    }
+
+    const sendResult = await sendQYWXMessage(env, `信用卡还款提醒：\n${reminders.join('\n')}`, settings)
+    return {
+      sent: true,
+      matchedCount: reminders.length,
+      mode: sendResult.mode,
+      modeLabel: sendResult.modeLabel,
+      reminders
     }
   } catch (error) {
+    if (throwOnError) throw error
     console.error('发送提醒失败:', error)
+    return { sent: false, matchedCount: 0, error: error.message || '发送提醒失败' }
   }
 }

@@ -17,7 +17,7 @@ import {
   updateRepaidStatus
 } from './lib/db.js'
 import { buildCardViewModels } from './lib/billing.js'
-import { checkAndSendReminders, sendQYWXMessage } from './lib/reminder.js'
+import { checkAndSendReminders, getQywxChannelStatus, sendQYWXMessage } from './lib/reminder.js'
 import { renderDashboard } from './templates/dashboard.js'
 import { renderLoginPage } from './templates/login.js'
 
@@ -224,16 +224,12 @@ async function handleBanksApi(env) {
 
 async function handleReminderSettingsApi(env) {
   const settings = await getAppSettings(env)
+  const channelStatus = getQywxChannelStatus(env, settings)
   return json({
     item: {
       ...settings,
-      envStatus: {
-        corpIdConfigured: !!settings.qywxCorpId || !!env.CORP_ID,
-        corpSecretConfigured: !!settings.qywxCorpSecretConfigured || !!env.CORP_SECRET,
-        agentIdConfigured: !!settings.qywxAgentId || !!env.AGENT_ID,
-        toUserConfigured: !!settings.qywxToUser || !!env.TO_USER,
-        proxyUrlConfigured: !!settings.qywxProxyUrl
-      }
+      channelStatus,
+      envStatus: channelStatus.envStatus
     }
   })
 }
@@ -246,14 +242,29 @@ async function handleUpdateReminderSettings(request, env) {
 }
 
 async function handleReminderTest(env) {
-  await checkAndSendReminders(env)
-  return json({ success: true })
+  const result = await checkAndSendReminders(env, { throwOnError: true })
+
+  if (!result.sent) {
+    return json({
+      success: true,
+      sent: false,
+      matchedCount: result.matchedCount || 0,
+      message: result.skippedReason || '这次没有可发送的提醒'
+    })
+  }
+
+  return json({
+    success: true,
+    sent: true,
+    matchedCount: result.matchedCount || 0,
+    message: `已发送 ${result.matchedCount || 0} 条提醒（${result.modeLabel || '企业微信'}）`
+  })
 }
 
 async function handleReminderSendTestMessage(env) {
   const settings = await getAppSettings(env)
-  await sendQYWXMessage(env, 'CardDay 测试消息：企业微信通知通道已接通。', settings)
-  return json({ success: true, message: '测试消息已发送' })
+  const sendResult = await sendQYWXMessage(env, 'CardDay 测试消息：企业微信通知通道已接通。', settings)
+  return json({ success: true, message: `测试消息已发送（${sendResult.modeLabel || '企业微信'}）` })
 }
 
 async function handleCreateBank(request, env) {
