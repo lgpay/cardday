@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, format } from '../vendor/date-fns-lite.js'
+import { differenceInCalendarDays, format, getBeijingNow } from '../vendor/date-fns-lite.js'
 import { calculateRepaymentDate } from './billing.js'
 import { getAppSettings, listUnpaidCards } from './db.js'
 
@@ -134,7 +134,7 @@ export async function checkAndSendReminders(env, options = {}) {
 
     const threshold = Number.isFinite(settings.reminderThreshold) ? settings.reminderThreshold : 1
     const cards = await listUnpaidCards(env)
-    const currentDate = new Date()
+    const currentDate = getBeijingNow()
     const reminders = []
 
     for (const card of cards) {

@@ -18,6 +18,7 @@ import {
 } from './lib/db.js'
 import { buildCardViewModels } from './lib/billing.js'
 import { checkAndSendReminders, getQywxChannelStatus, sendQYWXMessage } from './lib/reminder.js'
+import { getBeijingNow } from './vendor/date-fns-lite.js'
 import { renderDashboard } from './templates/dashboard.js'
 import { renderLoginPage } from './templates/login.js'
 
@@ -416,8 +417,7 @@ export default {
   },
 
   async scheduled(_event, env, _ctx) {
-    const date = new Date()
-    const beijingTime = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }))
+    const beijingTime = getBeijingNow()
 
     if (beijingTime.getHours() === 0) {
       await resetRepaidStatusOnBillingDay(env, beijingTime.getDate())

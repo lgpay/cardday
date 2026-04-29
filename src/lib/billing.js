@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, addMonths, format } from '../vendor/date-fns-lite.js'
+import { differenceInCalendarDays, addMonths, format, getBeijingNow } from '../vendor/date-fns-lite.js'
 
 export function calculateRepaymentDate(card, targetDate) {
   const billingDay = Number(card.billing_day)
@@ -55,7 +55,7 @@ export function calculateLongestGracePeriod(card, currentDate) {
   return differenceInCalendarDays(repaymentDate, currentDate)
 }
 
-export function buildCardViewModels(cards, currentDate = new Date()) {
+export function buildCardViewModels(cards, currentDate = getBeijingNow()) {
   return cards.map((card) => {
     const repaymentDate = calculateRepaymentDate(card, currentDate)
     const gracePeriod = calculateLongestGracePeriod(card, currentDate)
