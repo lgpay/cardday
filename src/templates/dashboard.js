@@ -114,13 +114,6 @@ export function renderDashboard() {
       font-size: 15px;
     }
 
-    .hero-actions {
-      margin-top: 18px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .meta {
       margin-top: 16px;
       display: flex;
@@ -954,8 +947,6 @@ export function renderDashboard() {
       .wrap { padding: 18px 12px 28px; }
       .hero, .panel { padding: 18px; }
       h1 { font-size: 30px; }
-      .hero-actions { width: 100%; }
-      .hero-actions .button { width: 100%; }
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
@@ -1007,10 +998,6 @@ export function renderDashboard() {
           <span class="meta-chip">📌 账单总览</span>
           <span class="meta-chip">⚡ 线上实时数据</span>
           <span class="meta-chip" id="lastUpdatedChip">🕒 等待加载</span>
-        </div>
-        <div class="hero-actions">
-          <button id="heroNewCardBtn" class="button" type="button">新增卡片</button>
-          <button id="heroReminderBtn" class="button secondary" type="button">提醒设置</button>
         </div>
       </div>
       <div class="summary-grid" id="summaryGrid">
@@ -1237,8 +1224,6 @@ export function renderDashboard() {
     const manageBanksBtn = document.getElementById('manageBanksBtn');
     const newCardBtn = document.getElementById('newCardBtn');
     const reminderSettingsBtn = document.getElementById('reminderSettingsBtn');
-    const heroNewCardBtn = document.getElementById('heroNewCardBtn');
-    const heroReminderBtn = document.getElementById('heroReminderBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
@@ -2136,9 +2121,6 @@ export function renderDashboard() {
       openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
       bankNameInput.focus();
     });
-
-    heroNewCardBtn.addEventListener('click', () => newCardBtn.click());
-    heroReminderBtn.addEventListener('click', () => reminderSettingsBtn.click());
 
     newCardBtn.addEventListener('click', async () => {
       if (!banksCache.length) {
