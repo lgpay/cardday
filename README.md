@@ -157,6 +157,9 @@ database_name = "cardday-db"
 database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 ```
 
+> 不要把真实 `database_id`、私有域名、Token、Secret 之类的值直接提交到公开仓库。
+> 示例配置请始终使用占位符。
+
 ### 3. 初始化数据库
 
 ```bash
