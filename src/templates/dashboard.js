@@ -474,11 +474,6 @@ export function renderDashboard() {
       flex-wrap: wrap;
     }
 
-    .inline-actions {
-      margin-top: 0;
-      justify-content: flex-end;
-      align-items: end;
-    }
 
     .button {
       cursor: pointer;
@@ -1048,14 +1043,14 @@ export function renderDashboard() {
           <h3 class="section-title">基础信息</h3>
           <div class="form-grid">
             <div class="field-group">
-              <label for="cardNameInput">卡片名称</label>
-              <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
-              <div id="cardNameError" class="field-error"></div>
-            </div>
-            <div class="field-group">
               <label for="bankSelect">银行</label>
               <select id="bankSelect" class="field"><option value="">选择银行</option></select>
               <div id="bankSelectError" class="field-error"></div>
+            </div>
+            <div class="field-group">
+              <label for="cardNameInput">卡片名称</label>
+              <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
+              <div id="cardNameError" class="field-error"></div>
             </div>
             <div class="field-group">
               <label for="cardNumberInput">尾号（非必填）</label>
@@ -1112,7 +1107,7 @@ export function renderDashboard() {
       <div id="bankPanel" class="bank-panel">
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
           <h3 class="section-title">银行信息</h3>
-          <div class="form-grid" style="align-items:end;">
+          <div class="form-grid">
             <div class="field-group">
               <label for="bankNameInput">银行名称</label>
               <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
@@ -1123,10 +1118,10 @@ export function renderDashboard() {
               <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
               <div id="bankIconUrlError" class="field-error"></div>
             </div>
-            <div class="actions-row inline-actions">
-              <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
-              <button id="saveBankBtn" class="button" type="button">保存银行</button>
-            </div>
+          </div>
+          <div class="actions-row">
+            <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
+            <button id="saveBankBtn" class="button" type="button">保存银行</button>
           </div>
         </div>
         <div class="modal-section">
@@ -1152,20 +1147,20 @@ export function renderDashboard() {
               <div id="reminderThresholdError" class="field-error"></div>
             </div>
             <div class="field-group">
+              <label for="qywxAgentIdInput">应用 AgentId</label>
+              <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
+            </div>
+            <div class="field-group">
+              <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
+              <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
+            </div>
+            <div class="field-group">
               <label for="qywxCorpIdInput">企业 ID</label>
               <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
             </div>
             <div class="field-group">
-              <label for="qywxAgentIdInput">应用 AgentId</label>
-              <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
-            </div>
-            <div class="field-group full">
               <label for="qywxToUserInput">接收对象</label>
               <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
-            </div>
-            <div class="field-group full">
-              <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
-              <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
             </div>
             <div class="field-group full">
               <label for="qywxProxyUrlInput">代理地址（可留空）</label>
