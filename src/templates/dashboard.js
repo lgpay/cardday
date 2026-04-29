@@ -677,22 +677,25 @@ export function renderDashboard() {
 
     .status-stack {
       display: grid;
-      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .status-item {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
-      padding: 12px 14px;
+      padding: 9px 12px;
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 12px;
       background: rgba(248,250,252,0.84);
+      min-height: 42px;
     }
 
     .status-item strong {
-      font-size: 14px;
+      font-size: 13px;
+      line-height: 1.3;
     }
 
     .status-note {
@@ -918,6 +921,7 @@ export function renderDashboard() {
       .config-grid { grid-template-columns: 1fr; }
       .reminder-hero { grid-template-columns: 1fr; }
       .status-overview { grid-template-columns: 1fr; }
+      .status-stack { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
