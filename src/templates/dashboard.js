@@ -760,7 +760,10 @@ export function renderDashboard() {
       opacity: 0;
       pointer-events: none;
       transition: opacity .2s ease, transform .2s ease;
-      z-index: 10;
+      z-index: 60;
+      max-width: min(92vw, 560px);
+      text-align: center;
+      line-height: 1.5;
     }
 
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
