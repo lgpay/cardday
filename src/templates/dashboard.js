@@ -420,6 +420,130 @@ export function renderDashboard() {
       gap: 14px;
     }
 
+    .reminder-layout {
+      display: grid;
+      gap: 16px;
+    }
+
+    .reminder-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .callout-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(239,246,255,0.92) 0%, rgba(248,250,252,0.98) 100%);
+      padding: 16px 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .callout-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+
+    .callout-text {
+      margin: 0;
+      color: #334155;
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .status-overview {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-pill-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .status-pill-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .status-pill-value {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .section-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fff;
+      padding: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 720px;
+    }
+
+    .mode-tip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(37,99,235,0.16);
+    }
+
+    .hint-list {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .hint-list code {
+      color: #0f172a;
+      background: rgba(15,23,42,0.05);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .actions-row.sticky-actions {
+      position: sticky;
+      bottom: 0;
+      margin-top: 4px;
+      padding-top: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.96) 22%, rgba(255,255,255,1) 100%);
+      border-top: 1px solid rgba(148,163,184,0.18);
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
     .status-stack {
       display: grid;
       gap: 10px;
@@ -655,6 +779,8 @@ export function renderDashboard() {
       .toolbar { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .config-grid { grid-template-columns: 1fr; }
+      .reminder-hero { grid-template-columns: 1fr; }
+      .status-overview { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
@@ -815,70 +941,115 @@ export function renderDashboard() {
       </div>
 
       <div id="reminderPanel" class="form-panel">
-        <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
-          <h3 class="section-title">提醒规则</h3>
-          <div class="config-grid">
-            <div class="field-group">
-              <label for="reminderEnabledInput">提醒开关</label>
-              <select id="reminderEnabledInput" class="field">
-                <option value="1">开启</option>
-                <option value="0">关闭</option>
-              </select>
+        <div class="reminder-layout">
+          <div class="reminder-hero">
+            <div class="callout-card">
+              <h3 class="callout-title">提醒怎么生效</h3>
+              <p class="callout-text">每天上午 9 点执行提醒任务。比如提前提醒天数填 <strong>3</strong>，表示从到期前 3 天开始，直到到期当天，都会进入提醒范围。</p>
+              <ul class="hint-list">
+                <li>只会提醒<strong>未还款</strong>的卡片</li>
+                <li>测试消息用于检查企业微信链路是否通</li>
+                <li>立即试发用于检查<strong>当前是否存在会命中的提醒</strong></li>
+              </ul>
             </div>
-            <div class="field-group">
-              <label for="reminderThresholdInput">提前提醒天数</label>
-              <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
-              <div id="reminderThresholdError" class="field-error"></div>
-            </div>
-          </div>
-          <div class="status-note">每天上午 9 点执行提醒任务。设置为 3 表示：到期前 3 天内（含当天）会进入提醒范围。</div>
-        </div>
-
-        <div class="modal-section">
-          <h3 class="section-title">企业微信通道配置</h3>
-          <div class="config-grid">
-            <div class="field-group">
-              <label for="qywxCorpIdInput">企业 ID</label>
-              <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
-            </div>
-            <div class="field-group">
-              <label for="qywxAgentIdInput">应用 AgentId</label>
-              <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
-            </div>
-            <div class="field-group full">
-              <label for="qywxToUserInput">接收对象</label>
-              <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
-            </div>
-            <div class="field-group full">
-              <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
-              <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
+            <div class="section-card">
+              <div class="section-head" style="margin-bottom:10px;">
+                <div>
+                  <h3 class="section-title" style="margin:0;">当前状态</h3>
+                  <p>先看这里，就知道现在是直连还是代理、配置是否完整。</p>
+                </div>
+              </div>
+              <div id="reminderStatusOverview" class="status-overview"></div>
             </div>
           </div>
-          <div class="status-note">企业微信密钥不会在页面回显。留空保存时，表示保留当前已配置的密钥。</div>
-        </div>
 
-        <div class="modal-section">
-          <h3 class="section-title">API 代理配置</h3>
-          <div class="config-grid">
-            <div class="field-group full">
-              <label for="qywxProxyUrlInput">代理地址</label>
-              <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
+          <div class="section-card">
+            <div class="section-head">
+              <div>
+                <h3 class="section-title" style="margin:0;">提醒规则</h3>
+                <p>先决定要不要开提醒，再设定提前几天开始提醒。</p>
+              </div>
+            </div>
+            <div class="config-grid">
+              <div class="field-group">
+                <label for="reminderEnabledInput">提醒开关</label>
+                <select id="reminderEnabledInput" class="field">
+                  <option value="1">开启</option>
+                  <option value="0">关闭</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="reminderThresholdInput">提前提醒天数</label>
+                <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
+                <div id="reminderThresholdError" class="field-error"></div>
+              </div>
             </div>
           </div>
-          <div class="status-note">如果这里填的是一个 Nginx 反向代理企业微信官方域名的地址（例如把 <code>https://qyapi.weixin.qq.com</code> 代理出来），系统会自动按企业微信原生接口路径请求它。</div>
-        </div>
 
-        <div class="modal-section">
-          <h3 class="section-title">企业微信发送状态</h3>
-          <div id="reminderEnvStatus" class="status-stack"></div>
-          <div class="status-note">这里展示的是当前实际发送模式、关键参数是否已就绪，以及如果缺配置时缺的是哪一项；具体密钥内容不会在页面显示。</div>
-        </div>
+          <div id="reminderChannelConfigSection" class="section-card">
+            <div class="section-head">
+              <div>
+                <h3 class="section-title" style="margin:0;">企业微信通道配置</h3>
+                <p>按发送链路需要的顺序填写。Secret 不会回显，留空保存表示保持原值。</p>
+              </div>
+              <div id="reminderModeTip" class="mode-tip">当前模式：直连模式</div>
+            </div>
+            <div class="config-grid">
+              <div class="field-group">
+                <label for="qywxCorpIdInput">企业 ID</label>
+                <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
+              </div>
+              <div class="field-group">
+                <label for="qywxAgentIdInput">应用 AgentId</label>
+                <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
+              </div>
+              <div class="field-group full">
+                <label for="qywxToUserInput">接收对象</label>
+                <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
+              </div>
+              <div class="field-group full">
+                <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
+                <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
+              </div>
+            </div>
+          </div>
 
-        <div class="actions-row">
-          <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
-          <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
-          <button id="testReminderMessageBtn" class="button secondary" type="button">发送测试消息</button>
-          <button id="saveReminderBtn" class="button" type="button">保存设置</button>
+          <div id="reminderProxySection" class="section-card">
+            <div class="section-head">
+              <div>
+                <h3 class="section-title" style="margin:0;">API 代理配置</h3>
+                <p>只有在你想通过代理访问企业微信接口时，才需要填写这里。</p>
+              </div>
+            </div>
+            <div class="config-grid">
+              <div class="field-group full">
+                <label for="qywxProxyUrlInput">代理地址</label>
+                <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
+              </div>
+            </div>
+            <ul class="hint-list">
+              <li>留空：走<strong>企业微信官方直连</strong></li>
+              <li>填写：走<strong>代理模式</strong>，系统会自动拼接 <code>/cgi-bin/gettoken</code> 和 <code>/cgi-bin/message/send</code></li>
+              <li>如果你只是反代了 <code>https://qyapi.weixin.qq.com</code>，这里填你的代理根地址即可</li>
+            </ul>
+          </div>
+
+          <div class="section-card">
+            <div class="section-head">
+              <div>
+                <h3 class="section-title" style="margin:0;">发送状态明细</h3>
+                <p>这里会显示关键参数是否就绪，以及当前还缺哪些项。</p>
+              </div>
+            </div>
+            <div id="reminderEnvStatus" class="status-stack"></div>
+          </div>
+
+          <div class="actions-row sticky-actions">
+            <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
+            <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
+            <button id="testReminderMessageBtn" class="button secondary" type="button">发送测试消息</button>
+            <button id="saveReminderBtn" class="button" type="button">保存设置</button>
+          </div>
         </div>
       </div>
     </section>
@@ -959,6 +1130,10 @@ export function renderDashboard() {
     const qywxCorpSecretInput = document.getElementById('qywxCorpSecretInput');
     const qywxProxyUrlInput = document.getElementById('qywxProxyUrlInput');
     const reminderEnvStatus = document.getElementById('reminderEnvStatus');
+    const reminderStatusOverview = document.getElementById('reminderStatusOverview');
+    const reminderChannelConfigSection = document.getElementById('reminderChannelConfigSection');
+    const reminderProxySection = document.getElementById('reminderProxySection');
+    const reminderModeTip = document.getElementById('reminderModeTip');
     const cancelReminderBtn = document.getElementById('cancelReminderBtn');
     const testReminderBtn = document.getElementById('testReminderBtn');
     const testReminderMessageBtn = document.getElementById('testReminderMessageBtn');
@@ -1243,6 +1418,46 @@ export function renderDashboard() {
       bankIconUrlInput.value = '';
     }
 
+    function updateReminderFormState() {
+      const enabled = reminderEnabledInput.value === '1';
+      const hasProxy = !!String(qywxProxyUrlInput.value || '').trim();
+      const modeLabel = hasProxy ? '代理模式' : '直连模式';
+
+      if (reminderModeTip) {
+        reminderModeTip.textContent = '当前模式：' + modeLabel;
+      }
+
+      reminderThresholdInput.disabled = !enabled;
+      qywxCorpIdInput.disabled = !enabled;
+      qywxAgentIdInput.disabled = !enabled;
+      qywxToUserInput.disabled = !enabled;
+      qywxCorpSecretInput.disabled = !enabled;
+      qywxProxyUrlInput.disabled = !enabled;
+      testReminderBtn.disabled = !enabled;
+      testReminderMessageBtn.disabled = !enabled;
+
+      if (reminderChannelConfigSection) reminderChannelConfigSection.classList.toggle('is-hidden', !enabled);
+      if (reminderProxySection) reminderProxySection.classList.toggle('is-hidden', !enabled);
+    }
+
+    function renderReminderStatusOverview(status) {
+      if (!reminderStatusOverview) return;
+      const modeLabel = status && status.modeLabel ? status.modeLabel : '直连模式';
+      const configured = !!(status && status.configured);
+      const missingText = status && Array.isArray(status.missingFields) && status.missingFields.length
+        ? status.missingFields.join(' / ')
+        : '无';
+
+      reminderStatusOverview.innerHTML = [
+        ['发送模式', modeLabel],
+        ['配置状态', configured ? '已就绪' : '待补全'],
+        ['缺少项', missingText],
+        ['提醒开关', reminderEnabledInput.value === '1' ? '已开启' : '已关闭']
+      ].map(([label, value]) => {
+        return '<div class="status-pill-card"><div class="status-pill-label">' + escapeHtml(label) + '</div><div class="status-pill-value">' + escapeHtml(String(value || '')) + '</div></div>';
+      }).join('');
+    }
+
     function renderReminderEnvStatus(status) {
       const envStatus = status && status.envStatus ? status.envStatus : status;
       const items = [
@@ -1275,7 +1490,9 @@ export function renderDashboard() {
       qywxToUserInput.value = item && item.qywxToUser ? item.qywxToUser : '';
       qywxCorpSecretInput.value = '';
       qywxProxyUrlInput.value = item && item.qywxProxyUrl ? item.qywxProxyUrl : '';
+      renderReminderStatusOverview(item && item.channelStatus ? item.channelStatus : null);
       renderReminderEnvStatus(item && item.channelStatus ? item.channelStatus : (item && item.envStatus ? item.envStatus : null));
+      updateReminderFormState();
     }
 
     async function loadReminderSettings() {
@@ -1736,6 +1953,9 @@ export function renderDashboard() {
       });
     });
 
+    reminderEnabledInput.addEventListener('change', updateReminderFormState);
+    qywxProxyUrlInput.addEventListener('input', updateReminderFormState);
+
     ruleTypeSelect.addEventListener('change', updateRuleInputs);
     reminderSettingsBtn.addEventListener('click', async () => {
       try {
@@ -1744,7 +1964,7 @@ export function renderDashboard() {
         showToast(err.message || '加载提醒设置失败');
         return;
       }
-      openModal('提醒设置', '把提醒开关、提前天数和发送环境状态集中放到这里。', reminderPanel);
+      openModal('提醒设置', '把提醒开关、提前天数和发送状态集中放到这里。', reminderPanel);
       reminderThresholdInput.focus();
     });
 
