@@ -7,15 +7,15 @@ export function renderDashboard() {
   <title>CardDay</title>
   <style>
     :root {
-      --bg: #edf4ff;
-      --bg-deep: #e0ecff;
-      --card: rgba(255, 255, 255, 0.82);
-      --card-strong: rgba(255, 255, 255, 0.96);
-      --card-soft: rgba(248, 250, 252, 0.88);
+      --bg: #eef4ff;
+      --bg-deep: #e5eeff;
+      --card: rgba(255, 255, 255, 0.84);
+      --card-strong: rgba(255, 255, 255, 0.97);
+      --card-soft: rgba(248, 250, 252, 0.9);
       --text: #0f172a;
-      --muted: #5b6b82;
-      --border: rgba(148, 163, 184, 0.22);
-      --border-strong: rgba(148, 163, 184, 0.34);
+      --muted: #5f7088;
+      --border: rgba(148, 163, 184, 0.2);
+      --border-strong: rgba(148, 163, 184, 0.32);
       --primary: #2563eb;
       --primary-strong: #1d4ed8;
       --primary-soft: rgba(37, 99, 235, 0.12);
@@ -28,10 +28,11 @@ export function renderDashboard() {
       --danger-text: #b91c1c;
       --idle-bg: #eef2ff;
       --idle-text: #4338ca;
-      --shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
-      --shadow-soft: 0 12px 28px rgba(15, 23, 42, 0.08);
-      --shadow-glow: 0 18px 40px rgba(37, 99, 235, 0.14);
-      --radius: 26px;
+      --shadow: 0 22px 56px rgba(15, 23, 42, 0.09);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+      --shadow-glow: 0 16px 32px rgba(37, 99, 235, 0.12);
+      --radius: 24px;
+      --radius-sm: 16px;
     }
 
     * { box-sizing: border-box; }
@@ -57,9 +58,9 @@ export function renderDashboard() {
     .panel,
     .table-wrap {
       background: var(--card);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.76);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
@@ -127,11 +128,11 @@ export function renderDashboard() {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.78);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 9px 13px;
-      box-shadow: 0 8px 18px rgba(15,23,42,0.04);
+      padding: 8px 12px;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.04);
     }
 
     .summary-grid {
@@ -141,10 +142,10 @@ export function renderDashboard() {
     }
 
     .stat {
-      background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%);
-      border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 20px;
-      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.94) 100%);
+      border: 1px solid rgba(255,255,255,0.74);
+      border-radius: 18px;
+      padding: 16px;
       box-shadow: var(--shadow-soft);
     }
 
@@ -180,6 +181,7 @@ export function renderDashboard() {
       font-size: 18px;
       line-height: 1.2;
       letter-spacing: -0.02em;
+      font-weight: 900;
     }
 
     .panel-desc {
@@ -247,11 +249,12 @@ export function renderDashboard() {
     }
 
     .section-title {
-      margin: 0 0 12px;
-      font-size: 14px;
+      margin: 0 0 10px;
+      font-size: 13px;
       font-weight: 900;
       color: #334155;
-      letter-spacing: 0.01em;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .modal-header {
@@ -333,12 +336,12 @@ export function renderDashboard() {
     select,
     input {
       width: 100%;
-      min-height: 46px;
-      border-radius: 14px;
+      min-height: 44px;
+      border-radius: 12px;
       border: 1px solid rgba(148,163,184,0.24);
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.92);
       color: var(--text);
-      padding: 11px 14px;
+      padding: 10px 13px;
       outline: none;
       transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
@@ -481,9 +484,9 @@ export function renderDashboard() {
       color: #fff;
       font-weight: 800;
       border: none;
-      border-radius: 14px;
-      min-height: 46px;
-      padding: 0 16px;
+      border-radius: 12px;
+      min-height: 44px;
+      padding: 0 15px;
       box-shadow: var(--shadow-glow);
       transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
     }
@@ -540,8 +543,8 @@ export function renderDashboard() {
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.94);
       color: var(--text);
-      border-radius: 12px;
-      padding: 8px 11px;
+      border-radius: 10px;
+      padding: 7px 10px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -712,11 +715,11 @@ export function renderDashboard() {
       justify-content: space-between;
       gap: 10px;
       align-items: center;
-      padding: 9px 12px;
+      padding: 8px 11px;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(248,250,252,0.84);
-      min-height: 42px;
+      border-radius: 10px;
+      background: rgba(248,250,252,0.82);
+      min-height: 40px;
     }
 
     .status-item strong {
@@ -767,7 +770,7 @@ export function renderDashboard() {
     }
 
     th, td {
-      padding: 15px 16px;
+      padding: 14px 15px;
       border-bottom: 1px solid rgba(226,232,240,0.88);
       text-align: left;
       vertical-align: middle;
