@@ -374,7 +374,7 @@ export function renderDashboard() {
 
     .switch-row {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       align-items: center;
       flex-wrap: wrap;
       margin-top: 12px;
@@ -385,12 +385,61 @@ export function renderDashboard() {
     .switch-row label {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 14px;
       background: rgba(248,250,252,0.86);
       border: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .switch-row input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      min-height: 16px;
+      padding: 0;
+      margin: 0;
+      border-radius: 5px;
+      border: 1.5px solid rgba(148,163,184,0.9);
+      background: #fff;
+      box-shadow: none;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 16px;
+      transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+
+    .switch-row input[type="checkbox"]::after {
+      content: "";
+      width: 8px;
+      height: 5px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg) scale(0);
+      transform-origin: center;
+      transition: transform .14s ease;
+      margin-top: -1px;
+    }
+
+    .switch-row input[type="checkbox"]:hover {
+      border-color: rgba(37,99,235,0.72);
+    }
+
+    .switch-row input[type="checkbox"]:focus {
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    .switch-row input[type="checkbox"]:checked {
+      background: linear-gradient(180deg, var(--primary) 0%, var(--primary-strong) 100%);
+      border-color: var(--primary-strong);
+    }
+
+    .switch-row input[type="checkbox"]:checked::after {
+      transform: rotate(-45deg) scale(1);
     }
 
     .actions-row {
