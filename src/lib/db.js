@@ -71,6 +71,7 @@ export async function getAppSettings(env) {
     reminderEnabled: map.reminder_enabled !== '0',
     reminderThreshold: Number(map.reminder_threshold || '1'),
     qywxCorpId: String(map.qywx_corp_id || ''),
+    qywxCorpSecret: String(map.qywx_corp_secret || ''),
     qywxAgentId: String(map.qywx_agent_id || ''),
     qywxToUser: String(map.qywx_to_user || ''),
     qywxCorpSecretConfigured: !!String(map.qywx_corp_secret || ''),
