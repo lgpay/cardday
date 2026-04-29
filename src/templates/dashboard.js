@@ -470,8 +470,14 @@ export function renderDashboard() {
       display: flex;
       gap: 10px;
       justify-content: flex-end;
-      margin-top: 14px;
+      margin-top: 12px;
       flex-wrap: wrap;
+    }
+
+    .inline-actions {
+      margin-top: 0;
+      justify-content: flex-end;
+      align-items: end;
     }
 
     .button {
@@ -512,6 +518,7 @@ export function renderDashboard() {
     .bank-list {
       margin-top: 14px;
       display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -521,8 +528,8 @@ export function renderDashboard() {
       gap: 12px;
       align-items: center;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px 16px;
+      border-radius: 14px;
+      padding: 12px 14px;
       background: rgba(255,255,255,0.92);
       box-shadow: 0 8px 20px rgba(15,23,42,0.04);
     }
@@ -940,6 +947,7 @@ export function renderDashboard() {
       .hero { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr 1fr; }
       .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bank-list { grid-template-columns: 1fr; }
       .panel-head { margin-bottom: 14px; }
     }
 
@@ -954,6 +962,7 @@ export function renderDashboard() {
       .reminder-hero { grid-template-columns: 1fr; }
       .status-overview { grid-template-columns: 1fr; }
       .status-stack { grid-template-columns: 1fr; }
+      .bank-list { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
@@ -1038,7 +1047,7 @@ export function renderDashboard() {
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
           <h3 class="section-title">基础信息</h3>
           <div class="form-grid">
-            <div class="field-group full">
+            <div class="field-group">
               <label for="cardNameInput">卡片名称</label>
               <input id="cardNameInput" class="field" type="text" placeholder="比如：悠悦白" />
               <div id="cardNameError" class="field-error"></div>
@@ -1103,7 +1112,7 @@ export function renderDashboard() {
       <div id="bankPanel" class="bank-panel">
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
           <h3 class="section-title">银行信息</h3>
-          <div class="form-grid">
+          <div class="form-grid" style="align-items:end;">
             <div class="field-group">
               <label for="bankNameInput">银行名称</label>
               <input id="bankNameInput" class="field" type="text" placeholder="比如：工商银行" />
@@ -1114,11 +1123,11 @@ export function renderDashboard() {
               <input id="bankIconUrlInput" class="field" type="text" placeholder="https://.../logo.png" />
               <div id="bankIconUrlError" class="field-error"></div>
             </div>
+            <div class="actions-row inline-actions">
+              <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
+              <button id="saveBankBtn" class="button" type="button">保存银行</button>
+            </div>
           </div>
-        </div>
-        <div class="actions-row">
-          <button id="cancelBankBtn" class="button secondary" type="button">取消</button>
-          <button id="saveBankBtn" class="button" type="button">保存银行</button>
         </div>
         <div class="modal-section">
           <h3 class="section-title">现有银行</h3>
@@ -1128,7 +1137,7 @@ export function renderDashboard() {
 
       <div id="reminderPanel" class="form-panel">
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
-          <h3 class="section-title">提醒规则</h3>
+          <h3 class="section-title">提醒设置</h3>
           <div class="config-grid">
             <div class="field-group">
               <label for="reminderEnabledInput">提醒开关</label>
@@ -1142,19 +1151,6 @@ export function renderDashboard() {
               <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
               <div id="reminderThresholdError" class="field-error"></div>
             </div>
-          </div>
-          <div class="status-note">每天上午 9 点执行提醒。比如填 3，表示从到期前 3 天开始提醒，直到到期当天。</div>
-        </div>
-
-        <div class="modal-section">
-          <h3 class="section-title">当前状态</h3>
-          <div id="reminderEnvStatus" class="status-stack"></div>
-          <div class="status-note">这里只显示当前发送模式、参数是否就绪和缺少项，不会显示密钥内容。</div>
-        </div>
-
-        <div id="reminderChannelConfigSection" class="modal-section">
-          <h3 class="section-title">企业微信配置</h3>
-          <div class="config-grid">
             <div class="field-group">
               <label for="qywxCorpIdInput">企业 ID</label>
               <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
@@ -1171,18 +1167,17 @@ export function renderDashboard() {
               <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
               <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
             </div>
-          </div>
-        </div>
-
-        <div id="reminderProxySection" class="modal-section">
-          <h3 class="section-title">代理配置</h3>
-          <div class="config-grid">
             <div class="field-group full">
-              <label for="qywxProxyUrlInput">代理地址</label>
+              <label for="qywxProxyUrlInput">代理地址（可留空）</label>
               <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
             </div>
           </div>
-          <div class="status-note">留空走直连；填写后走代理模式，系统会自动拼接企业微信接口路径。</div>
+          <div class="status-note">每天上午 9 点执行提醒。留空代理地址走直连；填写后走代理模式。</div>
+        </div>
+
+        <div class="modal-section" style="padding-top:12px; margin-top:12px;">
+          <h3 class="section-title">当前状态</h3>
+          <div id="reminderEnvStatus" class="status-stack"></div>
         </div>
 
         <div class="actions-row sticky-actions">
