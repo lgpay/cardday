@@ -67,14 +67,14 @@ export function renderDashboard() {
     .hero {
       position: relative;
       overflow: hidden;
-      padding: 28px;
+      padding: 30px;
       margin-bottom: 20px;
       display: grid;
-      grid-template-columns: 1.4fr 0.86fr;
-      gap: 20px;
+      grid-template-columns: 1.38fr 0.9fr;
+      gap: 22px;
       align-items: start;
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.68) 100%),
+        linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 100%),
         radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 30%);
     }
 
@@ -112,6 +112,13 @@ export function renderDashboard() {
       line-height: 1.82;
       max-width: 760px;
       font-size: 15px;
+    }
+
+    .hero-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .meta {
@@ -166,11 +173,35 @@ export function renderDashboard() {
       margin-bottom: 16px;
     }
 
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-desc {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      max-width: 720px;
+    }
+
     .toolbar {
       display: grid;
-      grid-template-columns: 1.6fr minmax(150px, 0.64fr) auto auto auto auto;
+      grid-template-columns: minmax(240px, 1.5fr) minmax(150px, 0.64fr) auto auto auto auto;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       align-items: center;
     }
 
@@ -730,6 +761,8 @@ export function renderDashboard() {
     .table-wrap {
       overflow: hidden;
       background: rgba(255,255,255,0.86);
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
     }
 
     table {
@@ -820,6 +853,10 @@ export function renderDashboard() {
       line-height: 1.4;
     }
 
+    .card-title {
+      font-size: 14px;
+    }
+
     .muted,
     .subtext {
       color: var(--muted);
@@ -847,11 +884,12 @@ export function renderDashboard() {
       justify-content: center;
       padding: 7px 11px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
       border: none;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+      letter-spacing: 0.01em;
     }
 
     .ok { background: var(--ok-bg); color: var(--ok-text); }
@@ -909,12 +947,15 @@ export function renderDashboard() {
       .hero { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr 1fr; }
       .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .panel-head { margin-bottom: 14px; }
     }
 
     @media (max-width: 760px) {
       .wrap { padding: 18px 12px 28px; }
       .hero, .panel { padding: 18px; }
       h1 { font-size: 30px; }
+      .hero-actions { width: 100%; }
+      .hero-actions .button { width: 100%; }
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
@@ -967,6 +1008,10 @@ export function renderDashboard() {
           <span class="meta-chip">⚡ 线上实时数据</span>
           <span class="meta-chip" id="lastUpdatedChip">🕒 等待加载</span>
         </div>
+        <div class="hero-actions">
+          <button id="heroNewCardBtn" class="button" type="button">新增卡片</button>
+          <button id="heroReminderBtn" class="button secondary" type="button">提醒设置</button>
+        </div>
       </div>
       <div class="summary-grid" id="summaryGrid">
         <div class="stat"><div class="stat-label">总卡片</div><div class="stat-value">--</div></div>
@@ -977,6 +1022,12 @@ export function renderDashboard() {
     </section>
 
     <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">卡片列表</h2>
+          <p class="panel-desc">支持搜索、筛选、排序和快捷切换还款状态。常用操作尽量控制在两步内完成。</p>
+        </div>
+      </div>
       <div class="toolbar">
         <input id="searchInput" class="field" type="search" placeholder="搜索银行 / 卡片名称 / 卡号尾号" />
         <select id="bankFilter" class="field">
@@ -1186,6 +1237,8 @@ export function renderDashboard() {
     const manageBanksBtn = document.getElementById('manageBanksBtn');
     const newCardBtn = document.getElementById('newCardBtn');
     const reminderSettingsBtn = document.getElementById('reminderSettingsBtn');
+    const heroNewCardBtn = document.getElementById('heroNewCardBtn');
+    const heroReminderBtn = document.getElementById('heroReminderBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
@@ -2083,6 +2136,9 @@ export function renderDashboard() {
       openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
       bankNameInput.focus();
     });
+
+    heroNewCardBtn.addEventListener('click', () => newCardBtn.click());
+    heroReminderBtn.addEventListener('click', () => reminderSettingsBtn.click());
 
     newCardBtn.addEventListener('click', async () => {
       if (!banksCache.length) {
