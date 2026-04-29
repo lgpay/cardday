@@ -1085,115 +1085,69 @@ export function renderDashboard() {
       </div>
 
       <div id="reminderPanel" class="form-panel">
-        <div class="reminder-layout">
-          <div class="reminder-hero">
-            <div class="callout-card">
-              <h3 class="callout-title">提醒怎么生效</h3>
-              <p class="callout-text">每天上午 9 点执行提醒任务。比如提前提醒天数填 <strong>3</strong>，表示从到期前 3 天开始，直到到期当天，都会进入提醒范围。</p>
-              <ul class="hint-list">
-                <li>只会提醒<strong>未还款</strong>的卡片</li>
-                <li>测试消息用于检查企业微信链路是否通</li>
-                <li>立即试发用于检查<strong>当前是否存在会命中的提醒</strong></li>
-              </ul>
+        <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="section-title">提醒规则</h3>
+          <div class="config-grid">
+            <div class="field-group">
+              <label for="reminderEnabledInput">提醒开关</label>
+              <select id="reminderEnabledInput" class="field">
+                <option value="1">开启</option>
+                <option value="0">关闭</option>
+              </select>
             </div>
-            <div class="section-card">
-              <div class="section-head" style="margin-bottom:10px;">
-                <div>
-                  <h3 class="section-title" style="margin:0;">当前状态</h3>
-                  <p>先看这里，就知道现在是直连还是代理、配置是否完整。</p>
-                </div>
-              </div>
-              <div id="reminderStatusOverview" class="status-overview"></div>
+            <div class="field-group">
+              <label for="reminderThresholdInput">提前提醒天数</label>
+              <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
+              <div id="reminderThresholdError" class="field-error"></div>
             </div>
           </div>
+          <div class="status-note">每天上午 9 点执行提醒。比如填 3，表示从到期前 3 天开始提醒，直到到期当天。</div>
+        </div>
 
-          <div class="section-card">
-            <div class="section-head">
-              <div>
-                <h3 class="section-title" style="margin:0;">提醒规则</h3>
-                <p>先决定要不要开提醒，再设定提前几天开始提醒。</p>
-              </div>
-            </div>
-            <div class="config-grid">
-              <div class="field-group">
-                <label for="reminderEnabledInput">提醒开关</label>
-                <select id="reminderEnabledInput" class="field">
-                  <option value="1">开启</option>
-                  <option value="0">关闭</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label for="reminderThresholdInput">提前提醒天数</label>
-                <input id="reminderThresholdInput" class="field" type="number" min="0" max="30" placeholder="0-30" />
-                <div id="reminderThresholdError" class="field-error"></div>
-              </div>
-            </div>
-          </div>
+        <div class="modal-section">
+          <h3 class="section-title">当前状态</h3>
+          <div id="reminderEnvStatus" class="status-stack"></div>
+          <div class="status-note">这里只显示当前发送模式、参数是否就绪和缺少项，不会显示密钥内容。</div>
+        </div>
 
-          <div id="reminderChannelConfigSection" class="section-card">
-            <div class="section-head">
-              <div>
-                <h3 class="section-title" style="margin:0;">企业微信通道配置</h3>
-                <p>按发送链路需要的顺序填写。Secret 不会回显，留空保存表示保持原值。</p>
-              </div>
-              <div id="reminderModeTip" class="mode-tip">当前模式：直连模式</div>
+        <div id="reminderChannelConfigSection" class="modal-section">
+          <h3 class="section-title">企业微信配置</h3>
+          <div class="config-grid">
+            <div class="field-group">
+              <label for="qywxCorpIdInput">企业 ID</label>
+              <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
             </div>
-            <div class="config-grid">
-              <div class="field-group">
-                <label for="qywxCorpIdInput">企业 ID</label>
-                <input id="qywxCorpIdInput" class="field" type="text" placeholder="企业微信 CorpID" />
-              </div>
-              <div class="field-group">
-                <label for="qywxAgentIdInput">应用 AgentId</label>
-                <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
-              </div>
-              <div class="field-group full">
-                <label for="qywxToUserInput">接收对象</label>
-                <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
-              </div>
-              <div class="field-group full">
-                <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
-                <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
-              </div>
+            <div class="field-group">
+              <label for="qywxAgentIdInput">应用 AgentId</label>
+              <input id="qywxAgentIdInput" class="field" type="text" placeholder="企业微信应用 AgentId" />
+            </div>
+            <div class="field-group full">
+              <label for="qywxToUserInput">接收对象</label>
+              <input id="qywxToUserInput" class="field" type="text" placeholder="成员账号，如 ZhangSan；全员可填 @all" />
+            </div>
+            <div class="field-group full">
+              <label for="qywxCorpSecretInput">应用 Secret（留空表示不修改）</label>
+              <input id="qywxCorpSecretInput" class="field" type="password" placeholder="重新输入时才会覆盖更新" />
             </div>
           </div>
+        </div>
 
-          <div id="reminderProxySection" class="section-card">
-            <div class="section-head">
-              <div>
-                <h3 class="section-title" style="margin:0;">API 代理配置</h3>
-                <p>只有在你想通过代理访问企业微信接口时，才需要填写这里。</p>
-              </div>
+        <div id="reminderProxySection" class="modal-section">
+          <h3 class="section-title">代理配置</h3>
+          <div class="config-grid">
+            <div class="field-group full">
+              <label for="qywxProxyUrlInput">代理地址</label>
+              <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
             </div>
-            <div class="config-grid">
-              <div class="field-group full">
-                <label for="qywxProxyUrlInput">代理地址</label>
-                <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
-              </div>
-            </div>
-            <ul class="hint-list">
-              <li>留空：走<strong>企业微信官方直连</strong></li>
-              <li>填写：走<strong>代理模式</strong>，系统会自动拼接 <code>/cgi-bin/gettoken</code> 和 <code>/cgi-bin/message/send</code></li>
-              <li>如果你只是反代了 <code>https://qyapi.weixin.qq.com</code>，这里填你的代理根地址即可</li>
-            </ul>
           </div>
+          <div class="status-note">留空走直连；填写后走代理模式，系统会自动拼接企业微信接口路径。</div>
+        </div>
 
-          <div class="section-card">
-            <div class="section-head">
-              <div>
-                <h3 class="section-title" style="margin:0;">发送状态明细</h3>
-                <p>这里会显示关键参数是否就绪，以及当前还缺哪些项。</p>
-              </div>
-            </div>
-            <div id="reminderEnvStatus" class="status-stack"></div>
-          </div>
-
-          <div class="actions-row sticky-actions">
-            <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
-            <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
-            <button id="testReminderMessageBtn" class="button secondary" type="button">发送测试消息</button>
-            <button id="saveReminderBtn" class="button" type="button">保存设置</button>
-          </div>
+        <div class="actions-row sticky-actions">
+          <button id="cancelReminderBtn" class="button secondary" type="button">取消</button>
+          <button id="testReminderBtn" class="button secondary" type="button">立即试发</button>
+          <button id="testReminderMessageBtn" class="button secondary" type="button">发送测试消息</button>
+          <button id="saveReminderBtn" class="button" type="button">保存设置</button>
         </div>
       </div>
     </section>
@@ -2108,7 +2062,7 @@ export function renderDashboard() {
         showToast(err.message || '加载提醒设置失败');
         return;
       }
-      openModal('提醒设置', '把提醒开关、提前天数和发送状态集中放到这里。', reminderPanel);
+      openModal('提醒设置', '把提醒规则和企业微信配置集中放到这里。', reminderPanel);
       reminderThresholdInput.focus();
     });
 
