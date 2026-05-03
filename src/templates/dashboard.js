@@ -4,7 +4,7 @@ export function renderDashboard() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CardDay</title>
+  <title>信用卡账单管家</title>
   <style>
     :root {
       --bg: #eef4ff;
@@ -1013,10 +1013,14 @@ export function renderDashboard() {
       .bank-list { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
       .table-wrap {
-        background: transparent;
-        border-radius: 0;
-        box-shadow: none;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         overflow: visible;
+        padding: 0;
       }
       table, tbody, tr, td {
         display: revert;
@@ -1132,7 +1136,7 @@ export function renderDashboard() {
       <div class="panel-head">
         <div>
           <h2 class="panel-title">卡片列表</h2>
-          <p class="panel-desc">按银行、账单日与还款状态快速查看你的卡片信息。</p>
+          <p class="panel-desc">按银行、账单日、到期时间与还款状态快速查看每张卡片。</p>
         </div>
       </div>
       <div class="toolbar">
@@ -1140,10 +1144,10 @@ export function renderDashboard() {
         <select id="bankFilter" class="field">
           <option value="all">全部银行</option>
         </select>
-        <button id="manageBanksBtn" class="button secondary" type="button">银行管理</button>
-        <button id="newCardBtn" class="button secondary" type="button">新增卡片</button>
-        <button id="reminderSettingsBtn" class="button secondary" type="button">提醒设置</button>
-        <button id="refreshBtn" class="button" type="button">刷新数据</button>
+        <button id="manageBanksBtn" class="button secondary" type="button">管理银行</button>
+        <button id="newCardBtn" class="button secondary" type="button">添加卡片</button>
+        <button id="reminderSettingsBtn" class="button secondary" type="button">通知设置</button>
+        <button id="refreshBtn" class="button" type="button">刷新列表</button>
       </div>
       <div class="summary-grid mobile-summary-grid" id="mobileSummaryGrid"></div>
       <div class="helper-row">
@@ -1204,7 +1208,7 @@ export function renderDashboard() {
               <div id="graceDaysError" class="field-error"></div>
             </div>
           </div>
-          <div class="tip-box" id="cardRuleTip">固定还款日模式：填写每月还款日。</div>
+          <div class="tip-box" id="cardRuleTip">固定还款日：填写每月还款日。</div>
         </div>
 
         <div class="modal-section">
@@ -1284,7 +1288,7 @@ export function renderDashboard() {
               <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
             </div>
           </div>
-          <div class="status-note">可按需设置提醒方式与通知参数，保存后即可生效。</div>
+          <div class="status-note">保存后，通知配置将立即生效。</div>
         </div>
 
         <div class="modal-section" style="padding-top:12px; margin-top:12px;">
@@ -1302,7 +1306,7 @@ export function renderDashboard() {
     </section>
 
     <section class="table-wrap">
-      <div id="loading" class="loading">加载中</div>
+      <div id="loading" class="loading">正在载入内容...</div>
       <div id="content"></div>
     </section>
   </div>
@@ -1311,8 +1315,8 @@ export function renderDashboard() {
     <div class="modal-card">
       <div class="modal-header">
         <div>
-          <h2 id="modalTitle" class="modal-title">编辑</h2>
-          <p id="modalDesc" class="modal-desc">在这里集中完成录入和修改。</p>
+          <h2 id="modalTitle" class="modal-title">编辑内容</h2>
+          <p id="modalDesc" class="modal-desc">在这里完成查看、录入与调整。</p>
         </div>
         <button id="closeModalBtn" class="icon-btn" type="button" aria-label="关闭">×</button>
       </div>
@@ -1804,7 +1808,7 @@ export function renderDashboard() {
           editingBankId = bank.bank_id;
           manageBanksBtn.textContent = '编辑银行';
           saveBankBtn.textContent = '保存修改';
-          openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
+          openModal('银行管理', '维护银行名称与展示图标。', bankPanel);
           bankNameInput.value = bank.bank_name || '';
           bankIconUrlInput.value = bank.bank_icon_url || '';
           bankNameInput.focus();
@@ -1834,7 +1838,7 @@ export function renderDashboard() {
       editingCardId = null;
       newCardBtn.textContent = '新增卡片';
       saveCardBtn.textContent = '保存卡片';
-      openModal('新增卡片', '集中填写卡片基础信息和还款规则。', formPanel);
+      openModal('添加卡片', '填写卡片信息与还款规则。', formPanel);
       cardNameInput.focus();
     }
 
@@ -1842,7 +1846,7 @@ export function renderDashboard() {
       editingCardId = card.cardId;
       newCardBtn.textContent = '编辑中';
       saveCardBtn.textContent = '保存修改';
-      openModal('编辑卡片', '修改卡片基础信息、账单日和还款规则。', formPanel);
+      openModal('编辑卡片', '更新卡片信息与还款规则。', formPanel);
       cardNameInput.value = card.cardName || '';
       const bank = banksCache.find(item => item.bank_name === card.bankName);
       bankSelect.value = bank ? String(bank.bank_id) : '';
@@ -2161,7 +2165,7 @@ export function renderDashboard() {
 
     function renderTable(items) {
       if (!items.length) {
-        contentEl.innerHTML = '<div class="empty">没有匹配的卡片，换个筛选条件试试。</div>';
+        contentEl.innerHTML = '<div class="empty">当前没有符合条件的卡片。</div>';
         return;
       }
 
@@ -2179,6 +2183,7 @@ export function renderDashboard() {
           '<td data-label="账单日"><strong>' + card.billingDay + '</strong></td>',
           '<td data-label="还款日">' + renderDateCell(card) + '</td>',
           '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong></div></td>',
+          '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></td>',
           '<td data-label="操作">' + renderActionCell(card) + '</td>',
           '</tr>'
         ].join('');
@@ -2193,6 +2198,7 @@ export function renderDashboard() {
         '<th class="sortable-th" data-sort-field="billingDay"><span class="sort-label">账单日 <span class="sort-arrow">' + getSortArrow('billingDay') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="daysToRepayment"><span class="sort-label">还款日 <span class="sort-arrow">' + getSortArrow('daysToRepayment') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="gracePeriod"><span class="sort-label">免息期 <span class="sort-arrow">' + getSortArrow('gracePeriod') + '</span></span></th>' +
+        '<th>状态</th>' +
         '<th>操作</th>' +
         '</tr></thead>',
         '<tbody>' + rows + '</tbody>',
@@ -2208,6 +2214,14 @@ export function renderDashboard() {
           img.style.display = 'none';
           if (img.nextElementSibling) img.nextElementSibling.style.display = 'inline-flex';
         }, { once: true });
+      });
+
+      contentEl.querySelectorAll('.status-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          await toggleRepaid(Number(btn.dataset.cardId), btn.dataset.repaid === 'true' || btn.dataset.repaid === '1');
+          btn.disabled = false;
+        });
       });
 
       contentEl.querySelectorAll('.js-edit-card').forEach((btn) => {
@@ -2316,7 +2330,7 @@ export function renderDashboard() {
       formPanel.classList.remove('show');
       resetCardForm();
       resetBankForm();
-      openModal('银行管理', '新增、编辑或删除银行，卡片表单会自动同步。', bankPanel);
+      openModal('银行管理', '维护银行名称与展示图标。', bankPanel);
       bankNameInput.focus();
     });
 
