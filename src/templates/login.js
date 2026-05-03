@@ -14,7 +14,7 @@ export function renderLoginPage(message = '') {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CardDay 登录</title>
+  <title>信用卡账单管家</title>
   <style>
     :root {
       --bg1: #eff6ff;
@@ -85,14 +85,14 @@ export function renderLoginPage(message = '') {
 </head>
 <body>
   <form class="card" method="post" action="/login">
-    <p class="eyebrow">CardDay</p>
-    <h1>登录后继续</h1>
-    <p>已为当前看板开启访问保护。登录成功后才能查看卡片、银行和提醒配置。</p>
+    <p class="eyebrow">信用卡账单管家</p>
+    <h1>欢迎回来</h1>
+    <p>登录后继续管理你的账单与还款安排。</p>
     ${safeMessage}
-    <label for="password">访问密码</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入访问密码" required />
+    <label for="password">密码</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required />
     <button type="submit">登录</button>
-    <div class="hint">登录状态会保存在当前浏览器中。</div>
+    <div class="hint">当前设备可保持登录状态，方便下次继续使用。</div>
   </form>
 </body>
 </html>`

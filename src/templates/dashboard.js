@@ -162,6 +162,14 @@ export function renderDashboard() {
       letter-spacing: -0.03em;
     }
 
+    .mobile-summary-grid {
+      display: none;
+    }
+
+    .js-mobile-sort {
+      display: none;
+    }
+
     .panel {
       padding: 18px;
       margin-bottom: 16px;
@@ -951,38 +959,144 @@ export function renderDashboard() {
 
     @media (max-width: 760px) {
       .wrap { padding: 18px 12px 28px; }
-      .hero, .panel { padding: 18px; }
-      h1 { font-size: 30px; }
-      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .toolbar { grid-template-columns: 1fr; }
-      .form-grid { grid-template-columns: 1fr; }
-      .config-grid { grid-template-columns: 1fr; }
-      .reminder-hero { grid-template-columns: 1fr; }
-      .status-overview { grid-template-columns: 1fr; }
-      .status-stack { grid-template-columns: 1fr; }
+      .hero,
+      .panel-head,
+      .toolbar,
+      #resultHint,
+      .table-wrap > #loading {
+        display: none !important;
+      }
+      thead,
+      td[data-label="操作"] {
+        display: none !important;
+      }
+      .panel { padding: 16px; }
+      .helper-row {
+        margin-top: 0;
+      }
+      .mobile-summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 0 12px;
+      }
+      .mobile-summary-grid .stat {
+        padding: 12px;
+        border-radius: 16px;
+      }
+      .mobile-summary-grid .stat-label {
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      .mobile-summary-grid .stat-value {
+        font-size: 24px;
+      }
+      .legend {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+      }
+      .legend .badge {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 6px;
+        font-size: 12px;
+        border-radius: 12px;
+        text-align: center;
+      }
+      .js-mobile-sort {
+        display: inline-flex;
+      }
       .bank-list { grid-template-columns: 1fr; }
       .field-group.full { grid-column: span 1; }
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; }
-      tbody { padding: 8px; }
-      tr {
-        margin: 10px;
+      .table-wrap {
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: visible;
+      }
+      table, tbody, tr, td {
+        display: revert;
+      }
+      .mobile-card-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .mobile-card {
         border: 1px solid var(--border);
         border-radius: 18px;
         background: rgba(255,255,255,0.96);
         box-shadow: var(--shadow-soft);
-        overflow: hidden;
+        padding: 12px 14px;
       }
-      td {
-        padding: 10px 14px;
-        border-bottom: none;
+      .mobile-card__row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
       }
-      td::before {
-        content: attr(data-label);
+      .mobile-card__row:first-child {
+        margin-top: 0;
+      }
+      .mobile-card__row--top {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+      .mobile-card__bank {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+      }
+      .mobile-card__tail {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .mobile-card__item {
+        min-width: 0;
+      }
+      .mobile-card__label {
         display: block;
         font-size: 12px;
         color: var(--muted);
         margin-bottom: 4px;
+      }
+      .mobile-card__item strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.35;
+        word-break: break-word;
+      }
+      .bank-name {
+        font-size: 15px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .bank-icon,
+      .bank-fallback {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        margin-right: 8px;
+        flex: 0 0 auto;
+      }
+      .badge.status-btn {
+        min-height: auto;
+        padding: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+        font-size: 13px;
+        text-align: left;
+        justify-content: flex-start;
       }
       .table-actions,
       .actions-row {
@@ -999,12 +1113,11 @@ export function renderDashboard() {
     <section class="hero">
       <div>
         <p class="eyebrow">CardDay</p>
-        <h1>信用卡账单看板</h1>
-        <p class="subtitle">把卡片、还款日、免息期和当前状态放到一页里。支持搜索、筛选、排序和一键切换已还款状态。</p>
+        <h1>信用卡账单管家</h1>
+        <p class="subtitle">集中查看卡片账单、到期时间与还款进度，让每一笔安排都更清晰。</p>
         <div class="meta">
-          <span class="meta-chip">📌 账单总览</span>
-          <span class="meta-chip">⚡ 线上实时数据</span>
-          <span class="meta-chip" id="lastUpdatedChip">🕒 等待加载</span>
+          <span class="meta-chip">账单总览</span>
+          <span class="meta-chip" id="lastUpdatedChip">等待更新</span>
         </div>
       </div>
       <div class="summary-grid" id="summaryGrid">
@@ -1019,7 +1132,7 @@ export function renderDashboard() {
       <div class="panel-head">
         <div>
           <h2 class="panel-title">卡片列表</h2>
-          <p class="panel-desc">支持搜索、筛选、排序和快捷切换还款状态。常用操作尽量控制在两步内完成。</p>
+          <p class="panel-desc">按银行、账单日与还款状态快速查看你的卡片信息。</p>
         </div>
       </div>
       <div class="toolbar">
@@ -1032,13 +1145,14 @@ export function renderDashboard() {
         <button id="reminderSettingsBtn" class="button secondary" type="button">提醒设置</button>
         <button id="refreshBtn" class="button" type="button">刷新数据</button>
       </div>
+      <div class="summary-grid mobile-summary-grid" id="mobileSummaryGrid"></div>
       <div class="helper-row">
-        <div class="legend">
+        <div class="legend" id="filterLegend">
           <button class="badge ok js-quick-filter" data-filter="repaid" type="button">已还款</button>
           <button class="badge idle js-quick-filter" data-filter="unpaid" type="button">未还款</button>
           <button class="badge danger js-quick-filter" data-filter="overdue" type="button">已逾期</button>
         </div>
-        <div id="resultHint">准备加载数据…</div>
+        <div id="resultHint">加载中</div>
       </div>
 
       <div id="formPanel" class="form-panel">
@@ -1135,7 +1249,7 @@ export function renderDashboard() {
 
       <div id="reminderPanel" class="form-panel">
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
-          <h3 class="section-title">提醒设置</h3>
+          <h3 class="section-title">通知设置</h3>
           <div class="config-grid">
             <div class="field-group">
               <label for="reminderEnabledInput">提醒开关</label>
@@ -1170,11 +1284,11 @@ export function renderDashboard() {
               <input id="qywxProxyUrlInput" class="field" type="text" placeholder="https://qyapi.lgkit.cn" />
             </div>
           </div>
-          <div class="status-note">每天上午 9 点执行提醒。留空代理地址走直连；填写后走代理模式。</div>
+          <div class="status-note">可按需设置提醒方式与通知参数，保存后即可生效。</div>
         </div>
 
         <div class="modal-section" style="padding-top:12px; margin-top:12px;">
-          <h3 class="section-title">当前状态</h3>
+          <h3 class="section-title">配置状态</h3>
           <div id="reminderEnvStatus" class="status-stack"></div>
         </div>
 
@@ -1188,7 +1302,7 @@ export function renderDashboard() {
     </section>
 
     <section class="table-wrap">
-      <div id="loading" class="loading">加载中...</div>
+      <div id="loading" class="loading">加载中</div>
       <div id="content"></div>
     </section>
   </div>
@@ -1219,6 +1333,8 @@ export function renderDashboard() {
     const reminderSettingsBtn = document.getElementById('reminderSettingsBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const resultHint = document.getElementById('resultHint');
+    const filterLegend = document.getElementById('filterLegend');
+    const mobileSummaryGrid = document.getElementById('mobileSummaryGrid');
     const lastUpdatedChip = document.getElementById('lastUpdatedChip');
     const summaryGrid = document.getElementById('summaryGrid');
     const formPanel = document.getElementById('formPanel');
@@ -1277,10 +1393,30 @@ export function renderDashboard() {
     let lastMeta = null;
     let currentSort = 'daysToRepaymentAsc';
     let currentStatusFilter = 'all';
+
+    function isMobileViewport() {
+      return window.matchMedia('(max-width: 760px)').matches;
+    }
     let banksCache = [];
     let editingCardId = null;
     let editingBankId = null;
     let reminderSettings = null;
+
+    function ensureMobileSortButton() {
+      if (!filterLegend) return;
+      const existing = filterLegend.querySelector('.js-mobile-sort');
+      if (isMobileViewport()) {
+        if (!existing) {
+          const btn = document.createElement('button');
+          btn.className = 'badge js-mobile-sort';
+          btn.type = 'button';
+          btn.dataset.sortBase = 'gracePeriod';
+          filterLegend.appendChild(btn);
+        }
+      } else if (existing) {
+        existing.remove();
+      }
+    }
 
     function showToast(message) {
       toastEl.textContent = message;
@@ -1370,14 +1506,20 @@ export function renderDashboard() {
       const total = items.length;
       const repaid = items.filter(item => item.repaid).length;
       const unpaid = total - repaid;
-      const dueSoon = items.filter(item => !item.repaid && item.daysToRepayment >= 0 && item.daysToRepayment <= 3).length;
       const overdue = items.filter(item => !item.repaid && item.daysToRepayment < 0).length;
-      summaryGrid.innerHTML = [
+      const desktopSummaryHtml = [
         ['总卡片', total],
         ['待还款', unpaid],
-        ['3 天内到期', dueSoon],
+        ['3 天内到期', items.filter(item => !item.repaid && item.daysToRepayment >= 0 && item.daysToRepayment <= 3).length],
         ['已逾期', overdue]
       ].map(([label, value]) => '<div class="stat"><div class="stat-label">' + label + '</div><div class="stat-value">' + value + '</div></div>').join('');
+      const mobileSummaryHtml = [
+        ['总卡片', total],
+        ['待还款', unpaid],
+        ['已逾期', overdue]
+      ].map(([label, value]) => '<div class="stat"><div class="stat-label">' + label + '</div><div class="stat-value">' + value + '</div></div>').join('');
+      if (summaryGrid) summaryGrid.innerHTML = desktopSummaryHtml;
+      if (mobileSummaryGrid) mobileSummaryGrid.innerHTML = mobileSummaryHtml;
     }
 
     function applyFilters() {
@@ -1409,7 +1551,10 @@ export function renderDashboard() {
 
       filteredItems = items;
       updateSummary(filteredItems);
-      resultHint.textContent = '当前显示 ' + filteredItems.length + ' / ' + allItems.length + ' 张卡';
+      if (isMobileViewport() && currentSort === 'daysToRepaymentAsc') {
+        currentSort = 'gracePeriodDesc';
+      }
+      resultHint.textContent = filteredItems.length + ' / ' + allItems.length;
       renderTable(filteredItems);
     }
 
@@ -1890,6 +2035,12 @@ export function renderDashboard() {
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
+      document.querySelectorAll('.js-mobile-sort').forEach((btn) => {
+        const active = currentSort === 'gracePeriodAsc' || currentSort === 'gracePeriodDesc';
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.textContent = currentSort === 'gracePeriodAsc' ? '免息期↑' : '免息期↓';
+      });
     }
 
     function bindQuickFilters() {
@@ -1897,6 +2048,18 @@ export function renderDashboard() {
         btn.addEventListener('click', () => {
           const next = btn.dataset.filter;
           currentStatusFilter = currentStatusFilter === next ? 'all' : next;
+          syncQuickFilters();
+          applyFilters();
+        });
+      });
+    }
+
+    function bindMobileSortButton() {
+      document.querySelectorAll('.js-mobile-sort').forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          currentSort = currentSort === 'gracePeriodAsc' ? 'gracePeriodDesc' : 'gracePeriodAsc';
           syncQuickFilters();
           applyFilters();
         });
@@ -1946,6 +2109,49 @@ export function renderDashboard() {
       return '<div><div>' + escapeHtml(card.repaymentDateText) + '</div></div>';
     }
 
+    function renderMobileCards(items) {
+      const rows = items.map((card) => {
+        const icon = card.bankIconUrl
+          ? '<img class="bank-icon js-bank-icon" src="' + escapeHtml(card.bankIconUrl) + '" alt="' + escapeHtml(card.bankName) + '" loading="lazy" referrerpolicy="no-referrer">' +
+            '<span class="bank-fallback" style="display:none">' + escapeHtml(getBankInitial(card.bankName)) + '</span>'
+          : '<span class="bank-fallback">' + escapeHtml(getBankInitial(card.bankName)) + '</span>';
+        const tail = card.cardNumberLast4 ? escapeHtml(card.cardNumberLast4) : '未填';
+        return [
+          '<div class="mobile-card">',
+            '<div class="mobile-card__row mobile-card__row--top">',
+              '<div class="mobile-card__bank">' + icon + '<span class="bank-name">' + escapeHtml(card.bankName) + '</span></div>',
+              '<div class="mobile-card__tail">尾号 ' + tail + '</div>',
+            '</div>',
+            '<div class="mobile-card__row">',
+              '<div class="mobile-card__item"><span class="mobile-card__label">账单日</span><strong>' + escapeHtml(String(card.billingDay)) + '</strong></div>',
+              '<div class="mobile-card__item"><span class="mobile-card__label">免息期</span><strong>' + escapeHtml(String(card.gracePeriod)) + ' 天</strong></div>',
+            '</div>',
+            '<div class="mobile-card__row">',
+              '<div class="mobile-card__item"><span class="mobile-card__label">还款日</span><strong>' + escapeHtml(card.repaymentDateText) + '</strong></div>',
+              '<div class="mobile-card__item"><span class="mobile-card__label">状态</span><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></div>',
+            '</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+
+      contentEl.innerHTML = '<div class="mobile-card-list">' + rows + '</div>';
+
+      contentEl.querySelectorAll('.js-bank-icon').forEach((img) => {
+        img.addEventListener('error', () => {
+          img.style.display = 'none';
+          if (img.nextElementSibling) img.nextElementSibling.style.display = 'inline-flex';
+        }, { once: true });
+      });
+
+      contentEl.querySelectorAll('.status-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          await toggleRepaid(Number(btn.dataset.cardId), btn.dataset.repaid === 'true' || btn.dataset.repaid === '1');
+          btn.disabled = false;
+        });
+      });
+    }
+
     function renderActionCell(card) {
       return '<div class="table-actions">'
         + '<button class="mini-btn js-edit-card" data-card-id="' + card.cardId + '" type="button">编辑</button>'
@@ -1959,6 +2165,11 @@ export function renderDashboard() {
         return;
       }
 
+      if (isMobileViewport()) {
+        renderMobileCards(items);
+        return;
+      }
+
       const rows = items.map((card) => {
         return [
           '<tr>',
@@ -1968,7 +2179,6 @@ export function renderDashboard() {
           '<td data-label="账单日"><strong>' + card.billingDay + '</strong></td>',
           '<td data-label="还款日">' + renderDateCell(card) + '</td>',
           '<td data-label="免息期"><div><strong>' + card.gracePeriod + ' 天</strong></div></td>',
-          '<td data-label="状态"><button class="badge status-btn ' + getStatusClass(card) + '" data-card-id="' + card.cardId + '" data-repaid="' + card.repaid + '">' + escapeHtml(getStatusText(card)) + '</button></td>',
           '<td data-label="操作">' + renderActionCell(card) + '</td>',
           '</tr>'
         ].join('');
@@ -1983,7 +2193,6 @@ export function renderDashboard() {
         '<th class="sortable-th" data-sort-field="billingDay"><span class="sort-label">账单日 <span class="sort-arrow">' + getSortArrow('billingDay') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="daysToRepayment"><span class="sort-label">还款日 <span class="sort-arrow">' + getSortArrow('daysToRepayment') + '</span></span></th>' +
         '<th class="sortable-th" data-sort-field="gracePeriod"><span class="sort-label">免息期 <span class="sort-arrow">' + getSortArrow('gracePeriod') + '</span></span></th>' +
-        '<th>状态</th>' +
         '<th>操作</th>' +
         '</tr></thead>',
         '<tbody>' + rows + '</tbody>',
@@ -1999,14 +2208,6 @@ export function renderDashboard() {
           img.style.display = 'none';
           if (img.nextElementSibling) img.nextElementSibling.style.display = 'inline-flex';
         }, { once: true });
-      });
-
-      contentEl.querySelectorAll('.status-btn').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          btn.disabled = true;
-          await toggleRepaid(Number(btn.dataset.cardId), btn.dataset.repaid === 'true' || btn.dataset.repaid === '1');
-          btn.disabled = false;
-        });
       });
 
       contentEl.querySelectorAll('.js-edit-card').forEach((btn) => {
@@ -2042,7 +2243,9 @@ export function renderDashboard() {
         lastMeta = data.meta || null;
         fillBankFilter(allItems);
         updateSummary(allItems);
-        lastUpdatedChip.textContent = '🕒 更新于 ' + formatLocalDate(lastMeta && lastMeta.generatedAt ? lastMeta.generatedAt : new Date().toISOString());
+        ensureMobileSortButton();
+        bindMobileSortButton();
+        lastUpdatedChip.textContent = '更新于 ' + formatLocalDate(lastMeta && lastMeta.generatedAt ? lastMeta.generatedAt : new Date().toISOString());
         applyFilters();
       } catch (err) {
         contentEl.innerHTML = '<div class="empty">' + escapeHtml(err.message || '加载失败') + '</div>';
@@ -2062,6 +2265,8 @@ export function renderDashboard() {
     });
 
     bindQuickFilters();
+    ensureMobileSortButton();
+    bindMobileSortButton();
     syncQuickFilters();
     updateRuleInputs();
 
@@ -2097,7 +2302,7 @@ export function renderDashboard() {
         showToast(err.message || '加载提醒设置失败');
         return;
       }
-      openModal('提醒设置', '把提醒规则和企业微信配置集中放到这里。', reminderPanel);
+      openModal('通知设置', '管理提醒规则与通知参数。', reminderPanel);
       reminderThresholdInput.focus();
     });
 

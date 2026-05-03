@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, format, getBeijingNow } from '../vendor/date-fns-lite.js'
 import { calculateRepaymentDate } from './billing.js'
+import { buildCardViewModels } from './billing.js'
 import { getAppSettings, listUnpaidCards } from './db.js'
 
 const QYWX_FIELD_LABELS = {
@@ -51,9 +52,10 @@ function joinProxyUrl(baseUrl, path) {
   return `${base}/${suffix}`
 }
 
-export async function sendQYWXMessage(env, message, settings = null) {
+export async function sendQYWXMessage(env, message, settings = null, options = {}) {
   const config = getQywxConfig(env, settings)
   const status = getQywxChannelStatus(env, settings)
+  const msgtype = options.msgtype === 'markdown' ? 'markdown' : 'text'
 
   if (status.mode === 'proxy') {
     if (status.missingFields.length) {
@@ -70,9 +72,9 @@ export async function sendQYWXMessage(env, message, settings = null) {
     const sendUrl = joinProxyUrl(config.proxyUrl, '/cgi-bin/message/send') + `?access_token=${encodeURIComponent(tokenData.access_token)}`
     const messageData = {
       touser: config.toUser,
-      msgtype: 'text',
+      msgtype,
       agentid: config.agentId,
-      text: { content: message }
+      [msgtype]: { content: message }
     }
 
     const sendRes = await fetch(sendUrl, {
@@ -101,9 +103,9 @@ export async function sendQYWXMessage(env, message, settings = null) {
   const url = `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${tokenData.access_token}`
   const messageData = {
     touser: config.toUser,
-    msgtype: 'text',
+    msgtype,
     agentid: config.agentId,
-    text: { content: message }
+    [msgtype]: { content: message }
   }
 
   const sendRes = await fetch(url, {
@@ -117,6 +119,32 @@ export async function sendQYWXMessage(env, message, settings = null) {
   }
 
   return { mode: status.mode, modeLabel: status.modeLabel }
+}
+
+function buildRepaymentMarkdown(items) {
+  const title = '## 信用卡还款提醒'
+  const body = items.map((item, index) => {
+    const dueText = item.daysToRepayment === 0 ? '今日到期' : `${item.daysToRepayment} 天后到期`
+    return `${index + 1}. **${item.displayName}**\n   > 还款日：<font color="warning">${item.repaymentDateText}</font>｜${dueText}`
+  }).join('\n')
+  return `${title}\n${body}`
+}
+
+function buildSpendAdviceMarkdown(cards) {
+  if (!cards.length) return ''
+  const topCards = cards
+    .slice()
+    .sort((a, b) => (b.gracePeriod || 0) - (a.gracePeriod || 0) || a.cardId - b.cardId)
+    .slice(0, 3)
+
+  if (!topCards.length) return ''
+
+  const lines = topCards.map((card, index) => {
+    const suffix = card.cardNumberLast4 ? `（尾号${card.cardNumberLast4}）` : ''
+    return `${index + 1}. **${card.bankName}${card.cardName}${suffix}**\n   > 参考免息期：<font color="info">${card.gracePeriod} 天</font>`
+  }).join('\n')
+
+  return `\n\n## 今日刷卡建议\n优先使用免息期更长的卡片：\n${lines}`
 }
 
 export async function checkAndSendReminders(env, options = {}) {
@@ -141,8 +169,12 @@ export async function checkAndSendReminders(env, options = {}) {
       const repaymentDate = calculateRepaymentDate(card, currentDate)
       const daysToRepayment = differenceInCalendarDays(repaymentDate, currentDate)
       if (daysToRepayment <= threshold && daysToRepayment >= 0) {
-        const suffix = card.card_number ? `(尾号${String(card.card_number).slice(-4)})` : ''
-        reminders.push(`${card.bank_name}${card.card_name}${suffix}将在${daysToRepayment}天后(${format(repaymentDate)})到期还款`)
+        const suffix = card.card_number ? `（尾号${String(card.card_number).slice(-4)}）` : ''
+        reminders.push({
+          displayName: `${card.bank_name}${card.card_name}${suffix}`,
+          repaymentDateText: format(repaymentDate),
+          daysToRepayment
+        })
       }
     }
 
@@ -150,13 +182,16 @@ export async function checkAndSendReminders(env, options = {}) {
       return { sent: false, matchedCount: 0, skippedReason: '当前没有进入提醒范围的未还款卡片' }
     }
 
-    const sendResult = await sendQYWXMessage(env, `信用卡还款提醒：\n${reminders.join('\n')}`, settings)
+    const viewModels = buildCardViewModels(cards)
+    const markdown = buildRepaymentMarkdown(reminders) + buildSpendAdviceMarkdown(viewModels.filter(card => !card.repaid))
+    const sendResult = await sendQYWXMessage(env, markdown, settings, { msgtype: 'markdown' })
     return {
       sent: true,
       matchedCount: reminders.length,
       mode: sendResult.mode,
       modeLabel: sendResult.modeLabel,
-      reminders
+      reminders: reminders.map(item => `${item.displayName} ${item.repaymentDateText}`),
+      markdown
     }
   } catch (error) {
     if (throwOnError) throw error
