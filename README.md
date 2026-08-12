@@ -148,13 +148,12 @@ npm install
 wrangler d1 create cardday-db
 ```
 
-把输出里的 `database_id` 写入 `wrangler.toml`：
+`wrangler.toml` 里只需写 `database_name`，Worker 会在部署 / 运行时按名字自动解析 `database_id`，**无需把 `database_id` 写死进公开仓库**：
 
 ```toml
 [[d1_databases]]
 binding = "DB"
 database_name = "cardday-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 ```
 
 > 不要把真实 `database_id`、私有域名、Token、Secret 之类的值直接提交到公开仓库。
@@ -202,17 +201,24 @@ npm run dev
 
 ### 6. 部署
 
+#### 方式一：通过 GitHub 自动部署（推荐）
+
+把仓库推到 GitHub 后，在 Cloudflare 控制台把 `cardday` Worker 绑定到 GitHub 仓库；
+之后每天向 `main` 分支 push，Cloudflare 会自动构建并部署，**无需在仓库里放任何 CI 配置或密钥**。
+
+1. Cloudflare 控制台 → **Workers & Pages** → 选择 `cardday` Worker
+2. 进入 **Settings / Deployments**，找到 **Connect to Git**，授权并选择仓库与分支（`main`）
+3. 绑定完成后，push 即部署；部署日志与历史在 Cloudflare 控制台查看
+
+> 这种方式下，Worker 的 Secret（如 `LOGIN_PASSWORD`、企业微信相关参数）已在 Cloudflare 控制台配置，会随每次 Git 部署保留，仓库里无需包含任何密钥。
+
+#### 方式二：本地手动部署
+
 ```bash
 npm run deploy
 ```
 
-在非交互环境里部署时，需要确保已经提供：
-
-```bash
-CLOUDFLARE_API_TOKEN=your_token
-```
-
-例如：
+在非交互环境里部署时，需要先准备好 Cloudflare API Token：
 
 ```bash
 CLOUDFLARE_API_TOKEN=your_token npm run deploy
@@ -234,19 +240,17 @@ CLOUDFLARE_API_TOKEN=your_token npm run deploy
 
 ## Cron 配置
 
-当前默认包含两条计划任务：
+当前默认包含两条计划任务（Cron 表达式按 UTC 触发，对应北京时间见下）：
 
 ```toml
 [triggers]
-crons = ["0 0 * * *", "0 9 * * *"]
+crons = ["0 1 * * *", "0 16 * * *"]
 ```
 
-含义（按北京时间 / Asia/Shanghai 解释业务时间）：
+- `0 1 * * *`（UTC）= 北京时间 09:00：执行提醒检查，向企业微信发送到期 / 逾期还款提醒
+- `0 16 * * *`（UTC）= 北京时间 00:00：把当日出账的卡片重置为“未还款”
 
-- `0 0 * * *`：每天北京时间 0 点重置当日账单卡为未还款
-- `0 9 * * *`：每天北京时间 9 点执行提醒检查
-
-> 注意：Cloudflare Cron 表达式本身按 UTC 触发，但 CardDay 内部会统一按 `Asia/Shanghai` 处理业务日期、当日判断、提醒天数和定时任务逻辑。
+> 注意：Cloudflare Cron 表达式本身按 UTC 触发。`scheduled()` 会按命中的 cron 字符串（`"0 1 * * *"` / `"0 16 * * *"`）来决定执行哪段逻辑；业务日期、账单日、到期天数、提醒天数等一律按 `Asia/Shanghai`（北京时间）计算。
 > 也就是说，这套系统的“今天”“账单日”“到期前几天”都以北京时间为准。
 
 ---
