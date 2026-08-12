@@ -1481,6 +1481,15 @@ export function renderDashboard() {
       if (card.repaid) return '已还款';
       if (card.daysToRepayment < 0) return '逾期 ' + Math.abs(card.daysToRepayment) + ' 天';
       if (card.daysToRepayment === 0) return '今天到期';
+      const bd = Number(card.billingDay) || 0;
+      if (bd) {
+        const now = new Date();
+        const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const thisBilling = new Date(now.getFullYear(), now.getMonth(), bd);
+        const daysToBilling = Math.round((thisBilling.getTime() - todayMid.getTime()) / 86400000);
+        if (daysToBilling > 0) return daysToBilling + ' 天后出账';
+        if (daysToBilling === 0) return '今天出账';
+      }
       return card.daysToRepayment + ' 天后到期';
     }
 
@@ -1588,7 +1597,10 @@ export function renderDashboard() {
       };
       const [asc, desc] = pairs[field] || [];
       if (!asc) return;
-      currentSort = current === asc ? desc : asc;
+      const defaultDir = field === 'gracePeriod' ? desc : asc;
+      if (current === asc) currentSort = desc;
+      else if (current === desc) currentSort = asc;
+      else currentSort = defaultDir;
       applyFilters();
     }
 
@@ -2081,7 +2093,7 @@ export function renderDashboard() {
         if (btn.dataset.bound === '1') return;
         btn.dataset.bound = '1';
         btn.addEventListener('click', () => {
-          currentSort = currentSort === 'gracePeriodAsc' ? 'gracePeriodDesc' : 'gracePeriodAsc';
+          currentSort = currentSort === 'gracePeriodDesc' ? 'gracePeriodAsc' : 'gracePeriodDesc';
           syncQuickFilters();
           applyFilters();
         });

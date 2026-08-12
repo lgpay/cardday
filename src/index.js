@@ -386,6 +386,10 @@ export default {
     const corsHeaders = getCorsHeaders()
     const url = new URL(request.url)
     const pathname = url.pathname
+
+    if (url.protocol === 'http:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+      return redirect(url.toString().replace(/^http:/, 'https:'))
+    }
     const cardIdMatch = pathname.match(/^\/api\/cards\/(\d+)$/)
     const bankIdMatch = pathname.match(/^\/api\/banks\/(\d+)$/)
     const isApi = pathname.startsWith('/api/')
