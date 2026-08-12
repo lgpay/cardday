@@ -1,5 +1,4 @@
-import { differenceInCalendarDays, format, getBeijingNow } from '../vendor/date-fns-lite.js'
-import { calculateRepaymentDate } from './billing.js'
+import { format, getBeijingNow } from '../vendor/date-fns-lite.js'
 import { buildCardViewModels } from './billing.js'
 import { getAppSettings, listUnpaidCards } from './db.js'
 
@@ -121,16 +120,30 @@ export async function sendQYWXMessage(env, message, settings = null, options = {
   return { mode: status.mode, modeLabel: status.modeLabel }
 }
 
-function buildRepaymentMarkdown(items) {
-  const title = '## 信用卡还款提醒'
-  const body = items.map((item, index) => {
-    const dueText = item.daysToRepayment === 0 ? '今日到期' : `${item.daysToRepayment} 天后到期`
-    return `${index + 1}. **${item.displayName}**\n   > 还款日：<font color="warning">${item.repaymentDateText}</font>｜${dueText}`
+function buildRepaymentText(items, currentDate) {
+  const dateText = format(currentDate)
+  const header = '信用卡还款提醒'
+  const summary = `今天是 ${dateText}，有 ${items.length} 张卡需要关注：`
+  const lines = items.map((item, index) => {
+    let dueTag
+    if (item.daysToRepayment < 0) {
+      dueTag = `已逾期 ${Math.abs(item.daysToRepayment)} 天`
+    } else if (item.daysToRepayment === 0) {
+      dueTag = '今日到期'
+    } else {
+      dueTag = `${item.daysToRepayment} 天后到期`
+    }
+    const billText = item.billingDay ? `账单日每月${item.billingDay}日` : ''
+    const graceText = Number.isFinite(item.gracePeriod) ? `免息期约 ${item.gracePeriod} 天` : ''
+    const meta = [billText, graceText].filter(Boolean).join(' ｜ ')
+    return `${index + 1}. ${item.displayName}\n` +
+      `   还款日：${item.repaymentDateText}（${dueTag}）` +
+      (meta ? `\n   ${meta}` : '')
   }).join('\n')
-  return `${title}\n${body}`
+  return `${header}\n${summary}\n\n${lines}`
 }
 
-function buildSpendAdviceMarkdown(cards) {
+function buildSpendAdviceText(cards) {
   if (!cards.length) return ''
   const topCards = cards
     .slice()
@@ -141,10 +154,12 @@ function buildSpendAdviceMarkdown(cards) {
 
   const lines = topCards.map((card, index) => {
     const suffix = card.cardNumberLast4 ? `（尾号${card.cardNumberLast4}）` : ''
-    return `${index + 1}. **${card.bankName}${card.cardName}${suffix}**\n   > 参考免息期：<font color="info">${card.gracePeriod} 天</font>`
+    const billText = card.billingDay ? `账单日每月${card.billingDay}日` : ''
+    const meta = [billText, `免息期约 ${card.gracePeriod} 天`].filter(Boolean).join(' ｜ ')
+    return `${index + 1}. ${card.bankName}${card.cardName}${suffix} ${meta}`
   }).join('\n')
 
-  return `\n\n## 今日刷卡建议\n优先使用免息期更长的卡片：\n${lines}`
+  return `\n\n【今日刷卡建议】\n优先使用免息期更长的卡：\n${lines}`
 }
 
 export async function checkAndSendReminders(env, options = {}) {
@@ -163,34 +178,28 @@ export async function checkAndSendReminders(env, options = {}) {
     const threshold = Number.isFinite(settings.reminderThreshold) ? settings.reminderThreshold : 1
     const cards = await listUnpaidCards(env)
     const currentDate = getBeijingNow()
-    const reminders = []
+    const viewModels = buildCardViewModels(cards)
 
-    for (const card of cards) {
-      const repaymentDate = calculateRepaymentDate(card, currentDate)
-      const daysToRepayment = differenceInCalendarDays(repaymentDate, currentDate)
-      if (daysToRepayment <= threshold && daysToRepayment >= 0) {
-        const suffix = card.card_number ? `（尾号${String(card.card_number).slice(-4)}）` : ''
-        reminders.push({
-          displayName: `${card.bank_name}${card.card_name}${suffix}`,
-          repaymentDateText: format(repaymentDate),
-          daysToRepayment
-        })
-      }
-    }
+    const matched = viewModels
+      .filter(vm => vm.daysToRepayment <= threshold)
+      .sort((a, b) => a.daysToRepayment - b.daysToRepayment)
+      .map(vm => {
+        const suffix = vm.cardNumberLast4 ? `（尾号${vm.cardNumberLast4}）` : ''
+        return { ...vm, displayName: `${vm.bankName}${vm.cardName}${suffix}` }
+      })
 
-    if (!reminders.length) {
+    if (!matched.length) {
       return { sent: false, matchedCount: 0, skippedReason: '当前没有逾期或进入提醒范围的未还款卡片' }
     }
 
-    const viewModels = buildCardViewModels(cards)
-    const markdown = buildRepaymentMarkdown(reminders) + buildSpendAdviceMarkdown(viewModels.filter(card => !card.repaid))
-    const sendResult = await sendQYWXMessage(env, markdown, settings, { msgtype: 'markdown' })
+    const message = buildRepaymentText(matched, currentDate) + buildSpendAdviceText(viewModels)
+    const sendResult = await sendQYWXMessage(env, message, settings, { msgtype: 'text' })
     return {
       sent: true,
-      matchedCount: reminders.length,
+      matchedCount: matched.length,
       mode: sendResult.mode,
       modeLabel: sendResult.modeLabel,
-      reminders: reminders.map(item => `${item.displayName} ${item.repaymentDateText}`),
+      reminders: matched.map(item => `${item.displayName} ${item.repaymentDateText}`),
       markdown
     }
   } catch (error) {
