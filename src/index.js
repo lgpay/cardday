@@ -416,14 +416,16 @@ export default {
     }
   },
 
-  async scheduled(_event, env, _ctx) {
+  async scheduled(event, env, _ctx) {
+    const cron = String(event?.cron || "").trim()
     const beijingTime = getBeijingNow()
 
-    if (beijingTime.getHours() === 0) {
+    if (cron === "0 16 * * *") {
       await resetRepaidStatusOnBillingDay(env, beijingTime.getDate())
+      return
     }
 
-    if (beijingTime.getHours() === 9) {
+    if (cron === "0 1 * * *") {
       await checkAndSendReminders(env)
     }
   }

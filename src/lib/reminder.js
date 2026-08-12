@@ -179,7 +179,7 @@ export async function checkAndSendReminders(env, options = {}) {
     }
 
     if (!reminders.length) {
-      return { sent: false, matchedCount: 0, skippedReason: '当前没有进入提醒范围的未还款卡片' }
+      return { sent: false, matchedCount: 0, skippedReason: '当前没有逾期或进入提醒范围的未还款卡片' }
     }
 
     const viewModels = buildCardViewModels(cards)
