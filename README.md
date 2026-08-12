@@ -225,6 +225,8 @@ npm run dev
 3. 绑定完成后，push 即部署；部署日志与历史在 Cloudflare 控制台查看
 
 > 这种方式下，敏感配置（如 `LOGIN_PASSWORD`，存放在账号级 Secrets Store；企业微信相关参数）已在 Cloudflare 侧配置，会随每次 Git 部署保留，仓库里无需包含任何密钥。
+>
+> 每次向 `main` push 后，Cloudflare 会自动构建并部署；可在控制台 **Deployments** 页查看部署来源（显示为 Git commit）。
 
 #### 方式二：本地手动部署
 
