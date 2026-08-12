@@ -44,6 +44,38 @@ export async function verifySessionValue(secret, value) {
   return timingSafeEqual(signature, expected)
 }
 
+// ---- 登录密码哈希存储（放 D1，不明文）----
+// 格式：sha256:<saltHex>:<hashHex>，hash = SHA-256(salt + password)
+const HASH_PREFIX = 'sha256'
+
+function toHex(buffer) {
+  return Array.from(new Uint8Array(buffer)).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+function randomHex(byteLength) {
+  const bytes = new Uint8Array(byteLength)
+  crypto.getRandomValues(bytes)
+  return toHex(bytes)
+}
+
+export function isHashFormat(value) {
+  return typeof value === 'string' && value.startsWith(HASH_PREFIX + ':') && value.split(':').length === 3
+}
+
+export async function hashPassword(password) {
+  const salt = randomHex(16)
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(salt + password))
+  return `${HASH_PREFIX}:${salt}:${toHex(digest)}`
+}
+
+export async function verifyPassword(input, storedHash) {
+  if (!isHashFormat(storedHash)) return false
+  const salt = storedHash.split(':', 2)[1]
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(salt + input))
+  const computed = `${HASH_PREFIX}:${salt}:${toHex(digest)}`
+  return timingSafeEqual(computed, storedHash)
+}
+
 export function getSessionCookieName() {
   return SESSION_COOKIE
 }

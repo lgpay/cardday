@@ -1146,7 +1146,7 @@ export function renderDashboard() {
         </select>
         <button id="manageBanksBtn" class="button secondary" type="button">管理银行</button>
         <button id="newCardBtn" class="button secondary" type="button">添加卡片</button>
-        <button id="reminderSettingsBtn" class="button secondary" type="button">通知设置</button>
+        <button id="reminderSettingsBtn" class="button secondary" type="button">系统设置</button>
         <button id="refreshBtn" class="button" type="button">刷新列表</button>
       </div>
       <div class="summary-grid mobile-summary-grid" id="mobileSummaryGrid"></div>
@@ -1253,6 +1253,17 @@ export function renderDashboard() {
 
       <div id="reminderPanel" class="form-panel">
         <div class="modal-section" style="margin-top:0;padding-top:0;border-top:none;">
+          <h3 class="section-title">后台登录密码</h3>
+          <div class="config-grid">
+            <div class="field-group full">
+              <label for="loginPasswordInput">登录密码（留空 = 不修改）</label>
+              <input id="loginPasswordInput" class="field" type="password" placeholder="设置后以哈希形式存入数据库；至少 4 位" />
+            </div>
+          </div>
+          <div class="status-note">设置后密码以哈希形式存入数据库，可在本页随时修改；明文不会落库。</div>
+        </div>
+
+        <div class="modal-section" style="padding-top:12px; margin-top:12px;">
           <h3 class="section-title">通知设置</h3>
           <div class="config-grid">
             <div class="field-group">
@@ -1382,6 +1393,7 @@ export function renderDashboard() {
     const qywxToUserInput = document.getElementById('qywxToUserInput');
     const qywxCorpSecretInput = document.getElementById('qywxCorpSecretInput');
     const qywxProxyUrlInput = document.getElementById('qywxProxyUrlInput');
+    const loginPasswordInput = document.getElementById('loginPasswordInput');
     const reminderEnvStatus = document.getElementById('reminderEnvStatus');
     const reminderStatusOverview = document.getElementById('reminderStatusOverview');
     const reminderChannelConfigSection = document.getElementById('reminderChannelConfigSection');
@@ -1772,6 +1784,7 @@ export function renderDashboard() {
       qywxToUserInput.value = item && item.qywxToUser ? item.qywxToUser : '';
       qywxCorpSecretInput.value = '';
       qywxProxyUrlInput.value = item && item.qywxProxyUrl ? item.qywxProxyUrl : '';
+      loginPasswordInput.value = '';
       renderReminderStatusOverview(item && item.channelStatus ? item.channelStatus : null);
       renderReminderEnvStatus(item && item.channelStatus ? item.channelStatus : (item && item.envStatus ? item.envStatus : null));
       updateReminderFormState();
@@ -1920,7 +1933,8 @@ export function renderDashboard() {
             qywxAgentId: qywxAgentIdInput.value.trim(),
             qywxToUser: qywxToUserInput.value.trim(),
             qywxCorpSecret: qywxCorpSecretInput.value.trim(),
-            qywxProxyUrl: qywxProxyUrlInput.value.trim()
+            qywxProxyUrl: qywxProxyUrlInput.value.trim(),
+            loginPassword: loginPasswordInput.value
           })
         });
         const data = await res.json().catch(() => ({}));
@@ -2316,7 +2330,7 @@ export function renderDashboard() {
         showToast(err.message || '加载提醒设置失败');
         return;
       }
-      openModal('通知设置', '管理提醒规则与通知参数。', reminderPanel);
+      openModal('系统设置', '管理后台登录密码与提醒通知参数。', reminderPanel);
       reminderThresholdInput.focus();
     });
 

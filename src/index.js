@@ -1,4 +1,4 @@
-import { createSessionValue, getSessionCookieName, getSessionTtl, verifySessionValue } from './lib/auth.js'
+import { createSessionValue, getSessionCookieName, getSessionTtl, hashPassword, isHashFormat, verifyPassword, verifySessionValue } from './lib/auth.js'
 import { buildCookie, getCorsHeaders, parseCookies } from './lib/http.js'
 import {
   createBank,
@@ -8,6 +8,7 @@ import {
   getAppSettings,
   getBankById,
   getCardById,
+  getLoginPasswordHash,
   listBanks,
   listCards,
   listCardBillingDays,
@@ -65,9 +66,7 @@ function unauthorizedJson() {
   return json({ error: '未登录或登录已失效' }, { status: 401 })
 }
 
-// 同时兼容两种绑定：
-//  - 旧版 secret_text：env.LOGIN_PASSWORD 是字符串，直接用
-//  - 新版 Secrets Store：env.LOGIN_PASSWORD 是带 .get() 的对象，需 await
+// 解析 Secrets Store / secret_text 绑定的明文值（兼容历史用法，作为 D1 之外的回退）
 async function resolveSecret(value) {
   if (value == null) return ''
   if (typeof value === 'string') return value
@@ -82,16 +81,30 @@ async function resolveSecret(value) {
   return String(value)
 }
 
-async function getLoginPassword(env) {
+// 登录密码的“认证密钥”：优先取自 D1 中哈希存储的 login_password_hash，
+// 取不到再回退到 Secrets Store / secret_text（迁移期兼容）。为空表示不启用登录保护。
+async function getAuthSecret(env) {
+  try {
+    const hash = await getLoginPasswordHash(env)
+    if (hash) return hash
+  } catch {
+    // D1 不可用时回退
+  }
   return (await resolveSecret(env.LOGIN_PASSWORD)).trim()
 }
 
+// 校验用户输入：secret 为哈希则走 verifyPassword，否则（回退明文）走直接比较
+async function verifyLoginInput(input, secret) {
+  if (isHashFormat(secret)) return verifyPassword(input, secret)
+  return input === secret
+}
+
 async function isAuthenticated(request, env) {
-  const password = await getLoginPassword(env)
-  if (!password) return true
+  const secret = await getAuthSecret(env)
+  if (!secret) return true
   const cookies = parseCookies(request)
   const sessionValue = cookies[getSessionCookieName()]
-  return verifySessionValue(password, sessionValue)
+  return verifySessionValue(secret, sessionValue)
 }
 
 async function requireAuth(request, env) {
@@ -116,6 +129,7 @@ function normalizeReminderPayload(payload = {}) {
   const qywxToUser = String(payload.qywxToUser || '').trim()
   const qywxCorpSecret = payload.qywxCorpSecret == null ? '' : String(payload.qywxCorpSecret).trim()
   const qywxProxyUrl = String(payload.qywxProxyUrl || '').trim()
+  const loginPassword = payload.loginPassword == null ? '' : String(payload.loginPassword)
 
   if (!Number.isInteger(reminderThreshold) || reminderThreshold < 0 || reminderThreshold > 30) {
     throw new Error('reminderThreshold 需在 0-30 之间')
@@ -125,6 +139,10 @@ function normalizeReminderPayload(payload = {}) {
     throw new Error('qywxProxyUrl 需为 http/https 地址')
   }
 
+  if (loginPassword && loginPassword.length < 4) {
+    throw new Error('登录密码至少 4 位')
+  }
+
   return {
     reminderEnabled,
     reminderThreshold,
@@ -132,7 +150,8 @@ function normalizeReminderPayload(payload = {}) {
     qywxAgentId,
     qywxToUser,
     qywxCorpSecret,
-    qywxProxyUrl
+    qywxProxyUrl,
+    loginPassword
   }
 }
 
@@ -183,18 +202,18 @@ async function handleLoginPage(request, env) {
 }
 
 async function handleLoginSubmit(request, env) {
-  const expectedPassword = await getLoginPassword(env)
-  if (!expectedPassword) {
+  const secret = await getAuthSecret(env)
+  if (!secret) {
     return redirect('/')
   }
 
   const form = await request.formData()
   const password = String(form.get('password') || '')
-  if (password !== expectedPassword) {
+  if (!(await verifyLoginInput(password, secret))) {
     return html(renderLoginPage('密码不对，再试一次。'), { status: 401 })
   }
 
-  const sessionValue = await createSessionValue(expectedPassword)
+  const sessionValue = await createSessionValue(secret)
   return redirect('/', {
     headers: {
       'Set-Cookie': buildCookie(getSessionCookieName(), sessionValue, { maxAge: getSessionTtl() })
@@ -255,6 +274,9 @@ async function handleReminderSettingsApi(env) {
 async function handleUpdateReminderSettings(request, env) {
   const payload = await request.json()
   const input = normalizeReminderPayload(payload)
+  if (input.loginPassword) {
+    input.loginPasswordHash = await hashPassword(input.loginPassword)
+  }
   const item = await updateReminderSettings(env, input)
   return json({ success: true, item })
 }
@@ -340,8 +362,8 @@ async function handleDeleteCard(env, cardId) {
 }
 
 async function handleIndex(request, env) {
-  const password = await getLoginPassword(env)
-  if (password && !(await isAuthenticated(request, env))) {
+  const secret = await getAuthSecret(env)
+  if (secret && !(await isAuthenticated(request, env))) {
     return redirect('/login')
   }
   const corsHeaders = getCorsHeaders()

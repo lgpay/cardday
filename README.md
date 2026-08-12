@@ -179,27 +179,16 @@ wrangler d1 execute cardday-db --file=schema.sql
 可选：
 
 - `REMINDER_THRESHOLD`：默认提前提醒天数，默认 `1`
-- `LOGIN_PASSWORD`：开启后台登录密码（已迁移到 Cloudflare Secrets Store 管理，见下）
+- `LOGIN_PASSWORD`：开启后台登录密码（见下）
 
-`LOGIN_PASSWORD` 用账号级 **Secrets Store** 管理（可轮换、可审计，不再使用只写的 `secret_text`）。
-绑定已写在 `wrangler.toml`，值存放在 Secrets Store 中，不进仓库：
+#### 后台登录密码（存于 D1，哈希）
 
-```toml
-[[secrets_store_secrets]]
-binding = "LOGIN_PASSWORD"
-store_id = "3c5f6df80f9847cd91944aa9291667ae"
-secret_name = "LOGIN_PASSWORD"
-```
+登录密码存放在 D1 `app_settings` 表的 `login_password_hash` 字段，使用 **SHA-256 + 随机盐**哈希存储，明文不会落库；即便数据库被导出也无法还原密码。
 
-修改密码值（轮换）：
+修改密码：进入后台 **系统设置** 页，在「后台登录密码」输入框填写并保存（留空表示不修改）即可。
 
-```bash
-wrangler secrets-store secret update 3c5f6df80f9847cd91944aa9291667ae \
-  --secret-id <secret-id> --value '<新密码>' --scopes workers --remote
-```
-
-> 注意：Secrets Store 的绑定在运行时是对象，需用 `await env.LOGIN_PASSWORD.get()` 读取，
-> 代码里 `resolveSecret()` 已同时兼容 Secrets Store 与旧版 `secret_text`。
+> 仓库 `wrangler.toml` 不含任何账号级 ID（无 `store_id`、无 `database_id`），可自由 fork / 换账号部署。
+> 代码里 `resolveSecret()` 仍保留对旧版 `secret_text` 的兼容回退（仅作迁移期兜底）。
 
 企业微信相关参数（`CORP_ID` 等）优先取自 D1 设置表，也可通过 `wrangler secret put` 设为 Worker 环境变量作为回退。其他非敏感变量也可写进 `wrangler.toml` 或保存到 D1。
 
@@ -224,7 +213,7 @@ npm run dev
 2. 进入 **Settings / Deployments**，找到 **Connect to Git**，授权并选择仓库与分支（`main`）
 3. 绑定完成后，push 即部署；部署日志与历史在 Cloudflare 控制台查看
 
-> 这种方式下，敏感配置（如 `LOGIN_PASSWORD`，存放在账号级 Secrets Store；企业微信相关参数）已在 Cloudflare 侧配置，会随每次 Git 部署保留，仓库里无需包含任何密钥。
+> 这种方式下，`wrangler.toml` 不含任何账号级 ID（`database_id` 按 `database_name` 自动解析，登录密码存于 D1 且哈希），仓库可自由 fork / 换账号部署，无需在仓库里放任何密钥。
 >
 > 每次向 `main` push 后，Cloudflare 会自动构建并部署；可在控制台 **Deployments** 页查看部署来源（显示为 Git commit）。
 

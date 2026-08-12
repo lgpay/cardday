@@ -75,8 +75,20 @@ export async function getAppSettings(env) {
     qywxAgentId: String(map.qywx_agent_id || ''),
     qywxToUser: String(map.qywx_to_user || ''),
     qywxCorpSecretConfigured: !!String(map.qywx_corp_secret || ''),
-    qywxProxyUrl: String(map.qywx_proxy_url || '')
+    qywxProxyUrl: String(map.qywx_proxy_url || ''),
+    loginPasswordConfigured: !!String(map.login_password_hash || '')
   }
+}
+
+export async function getLoginPasswordHash(env) {
+  const row = await env.DB.prepare(
+    "SELECT setting_value FROM app_settings WHERE setting_key = 'login_password_hash'"
+  ).first()
+  return row ? String(row.setting_value || '') : ''
+}
+
+export async function setLoginPasswordHash(env, hash) {
+  return upsertAppSetting(env, 'login_password_hash', hash)
 }
 
 export async function upsertAppSetting(env, key, value) {
@@ -94,6 +106,9 @@ export async function updateReminderSettings(env, input) {
   await upsertAppSetting(env, 'qywx_proxy_url', input.qywxProxyUrl || '')
   if (input.qywxCorpSecret !== undefined && input.qywxCorpSecret !== null && input.qywxCorpSecret !== '') {
     await upsertAppSetting(env, 'qywx_corp_secret', input.qywxCorpSecret)
+  }
+  if (input.loginPasswordHash) {
+    await setLoginPasswordHash(env, input.loginPasswordHash)
   }
   return getAppSettings(env)
 }
