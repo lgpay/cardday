@@ -9,3 +9,10 @@ crons = ["0 1 * * *", "0 16 * * *"]
 binding = "DB"
 database_name = "cardday-db"
 # database_id 由 wrangler 按 database_name 自动解析（不写死）
+
+# 密码等敏感配置统一存放在 Cloudflare Secrets Store（账号级、可轮换、可审计）
+# 不再使用 secret_text（只写、不可轮换）
+[[secrets_store_secrets]]
+binding = "LOGIN_PASSWORD"
+store_id = "3c5f6df80f9847cd91944aa9291667ae"
+secret_name = "LOGIN_PASSWORD"

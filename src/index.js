@@ -65,12 +65,29 @@ function unauthorizedJson() {
   return json({ error: '未登录或登录已失效' }, { status: 401 })
 }
 
-function getLoginPassword(env) {
-  return String(env.LOGIN_PASSWORD || '').trim()
+// 同时兼容两种绑定：
+//  - 旧版 secret_text：env.LOGIN_PASSWORD 是字符串，直接用
+//  - 新版 Secrets Store：env.LOGIN_PASSWORD 是带 .get() 的对象，需 await
+async function resolveSecret(value) {
+  if (value == null) return ''
+  if (typeof value === 'string') return value
+  if (typeof value.get === 'function') {
+    try {
+      const v = await value.get()
+      return v == null ? '' : String(v)
+    } catch {
+      return ''
+    }
+  }
+  return String(value)
+}
+
+async function getLoginPassword(env) {
+  return (await resolveSecret(env.LOGIN_PASSWORD)).trim()
 }
 
 async function isAuthenticated(request, env) {
-  const password = getLoginPassword(env)
+  const password = await getLoginPassword(env)
   if (!password) return true
   const cookies = parseCookies(request)
   const sessionValue = cookies[getSessionCookieName()]
@@ -166,7 +183,7 @@ async function handleLoginPage(request, env) {
 }
 
 async function handleLoginSubmit(request, env) {
-  const expectedPassword = getLoginPassword(env)
+  const expectedPassword = await getLoginPassword(env)
   if (!expectedPassword) {
     return redirect('/')
   }
@@ -323,7 +340,7 @@ async function handleDeleteCard(env, cardId) {
 }
 
 async function handleIndex(request, env) {
-  const password = getLoginPassword(env)
+  const password = await getLoginPassword(env)
   if (password && !(await isAuthenticated(request, env))) {
     return redirect('/login')
   }

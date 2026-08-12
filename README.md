@@ -179,15 +179,29 @@ wrangler d1 execute cardday-db --file=schema.sql
 可选：
 
 - `REMINDER_THRESHOLD`：默认提前提醒天数，默认 `1`
-- `LOGIN_PASSWORD`：开启后台登录密码
+- `LOGIN_PASSWORD`：开启后台登录密码（已迁移到 Cloudflare Secrets Store 管理，见下）
 
-可以通过 Wrangler 配置：
+`LOGIN_PASSWORD` 用账号级 **Secrets Store** 管理（可轮换、可审计，不再使用只写的 `secret_text`）。
+绑定已写在 `wrangler.toml`，值存放在 Secrets Store 中，不进仓库：
 
-```bash
-wrangler secret put CORP_SECRET
+```toml
+[[secrets_store_secrets]]
+binding = "LOGIN_PASSWORD"
+store_id = "3c5f6df80f9847cd91944aa9291667ae"
+secret_name = "LOGIN_PASSWORD"
 ```
 
-其他非敏感变量也可以写进 `wrangler.toml` 或通过 dashboard 页面保存到 D1。
+修改密码值（轮换）：
+
+```bash
+wrangler secrets-store secret update 3c5f6df80f9847cd91944aa9291667ae \
+  --secret-id <secret-id> --value '<新密码>' --scopes workers --remote
+```
+
+> 注意：Secrets Store 的绑定在运行时是对象，需用 `await env.LOGIN_PASSWORD.get()` 读取，
+> 代码里 `resolveSecret()` 已同时兼容 Secrets Store 与旧版 `secret_text`。
+
+企业微信相关参数（`CORP_ID` 等）优先取自 D1 设置表，也可通过 `wrangler secret put` 设为 Worker 环境变量作为回退。其他非敏感变量也可写进 `wrangler.toml` 或保存到 D1。
 
 > 说明：
 > - 页面里保存的提醒配置会优先用于发送。
@@ -210,7 +224,7 @@ npm run dev
 2. 进入 **Settings / Deployments**，找到 **Connect to Git**，授权并选择仓库与分支（`main`）
 3. 绑定完成后，push 即部署；部署日志与历史在 Cloudflare 控制台查看
 
-> 这种方式下，Worker 的 Secret（如 `LOGIN_PASSWORD`、企业微信相关参数）已在 Cloudflare 控制台配置，会随每次 Git 部署保留，仓库里无需包含任何密钥。
+> 这种方式下，敏感配置（如 `LOGIN_PASSWORD`，存放在账号级 Secrets Store；企业微信相关参数）已在 Cloudflare 侧配置，会随每次 Git 部署保留，仓库里无需包含任何密钥。
 
 #### 方式二：本地手动部署
 
