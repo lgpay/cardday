@@ -1470,36 +1470,15 @@ export function renderDashboard() {
         .replace(/'/g, '&#39;');
     }
 
-    function getCardBillingState(card) {
-      const bd = Number(card.billingDay) || 0;
-      let daysToThisBilling = null;
-      if (bd) {
-        const now = new Date();
-        const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const thisBilling = new Date(now.getFullYear(), now.getMonth(), bd);
-        daysToThisBilling = Math.round((thisBilling.getTime() - todayMid.getTime()) / 86400000);
-      }
-      let phase = 'due';
-      if (card.repaid) phase = 'repaid';
-      else if (daysToThisBilling !== null && daysToThisBilling >= 0 && card.daysToRepayment < 0) phase = 'unbilled';
-      return { daysToThisBilling, phase };
-    }
-
     function getStatusClass(card) {
-      const { phase } = getCardBillingState(card);
-      if (phase === 'repaid') return 'ok';
-      if (phase === 'unbilled') return 'idle';
+      if (card.repaid) return 'ok';
       if (card.daysToRepayment < 0) return 'danger';
       if (card.daysToRepayment <= 3) return 'warn';
       return 'idle';
     }
 
     function getStatusText(card) {
-      const { daysToThisBilling, phase } = getCardBillingState(card);
-      if (phase === 'repaid') return '已还款';
-      if (phase === 'unbilled') {
-        return daysToThisBilling === 0 ? '今天出账' : daysToThisBilling + ' 天后出账';
-      }
+      if (card.repaid) return '已还款';
       if (card.daysToRepayment < 0) return '逾期 ' + Math.abs(card.daysToRepayment) + ' 天';
       if (card.daysToRepayment === 0) return '今天到期';
       return card.daysToRepayment + ' 天后到期';
