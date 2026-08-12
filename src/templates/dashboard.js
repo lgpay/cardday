@@ -1484,6 +1484,13 @@ export function renderDashboard() {
       return card.daysToRepayment + ' 天后到期';
     }
 
+    function getStatusRank(card) {
+      if (card.repaid) return 3;
+      if (card.daysToRepayment < 0) return 0;
+      if (card.daysToRepayment <= 3) return 1;
+      return 2;
+    }
+
     function formatLocalDate(isoText) {
       if (!isoText) return '未知';
       const d = new Date(isoText);
@@ -1561,15 +1568,12 @@ export function renderDashboard() {
         if (sorter === 'gracePeriodDesc') return b.gracePeriod - a.gracePeriod || a.cardId - b.cardId;
         if (sorter === 'bankNameAsc') return String(a.bankName).localeCompare(String(b.bankName), 'zh-CN') || a.cardId - b.cardId;
         if (sorter === 'bankNameDesc') return String(b.bankName).localeCompare(String(a.bankName), 'zh-CN') || a.cardId - b.cardId;
-        if (sorter === 'daysToRepaymentDesc') return b.daysToRepayment - a.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
-        return a.daysToRepayment - b.daysToRepayment || Number(a.repaid) - Number(b.repaid) || a.cardId - b.cardId;
+        if (sorter === 'daysToRepaymentDesc') return getStatusRank(a) - getStatusRank(b) || b.daysToRepayment - a.daysToRepayment || a.cardId - b.cardId;
+        return getStatusRank(a) - getStatusRank(b) || a.daysToRepayment - b.daysToRepayment || a.cardId - b.cardId;
       });
 
       filteredItems = items;
       updateSummary(filteredItems);
-      if (isMobileViewport() && currentSort === 'daysToRepaymentAsc') {
-        currentSort = 'gracePeriodDesc';
-      }
       resultHint.textContent = filteredItems.length + ' / ' + allItems.length;
       renderTable(filteredItems);
     }
