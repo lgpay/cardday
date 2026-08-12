@@ -1,4 +1,4 @@
-import { createSessionValue, getSessionCookieName, getSessionTtl, hashPassword, isHashFormat, verifyPassword, verifySessionValue } from './lib/auth.js'
+import { createSessionValue, getSessionCookieName, getSessionTtl, hashPassword, verifyPassword, verifySessionValue } from './lib/auth.js'
 import { buildCookie, getCorsHeaders, parseCookies } from './lib/http.js'
 import {
   createBank,
@@ -66,37 +66,19 @@ function unauthorizedJson() {
   return json({ error: '未登录或登录已失效' }, { status: 401 })
 }
 
-// 解析 Secrets Store / secret_text 绑定的明文值（兼容历史用法，作为 D1 之外的回退）
-async function resolveSecret(value) {
-  if (value == null) return ''
-  if (typeof value === 'string') return value
-  if (typeof value.get === 'function') {
-    try {
-      const v = await value.get()
-      return v == null ? '' : String(v)
-    } catch {
-      return ''
-    }
-  }
-  return String(value)
-}
-
-// 登录密码的“认证密钥”：优先取自 D1 中哈希存储的 login_password_hash，
-// 取不到再回退到 Secrets Store / secret_text（迁移期兼容）。为空表示不启用登录保护。
+// 登录密码的“认证密钥”：取自 D1 中哈希存储的 login_password_hash。为空表示不启用登录保护。
 async function getAuthSecret(env) {
   try {
     const hash = await getLoginPasswordHash(env)
-    if (hash) return hash
+    return hash || ''
   } catch {
-    // D1 不可用时回退
+    return ''
   }
-  return (await resolveSecret(env.LOGIN_PASSWORD)).trim()
 }
 
-// 校验用户输入：secret 为哈希则走 verifyPassword，否则（回退明文）走直接比较
+// 校验用户输入：D1 中存储的密钥为加盐 SHA-256 哈希，统一走 verifyPassword
 async function verifyLoginInput(input, secret) {
-  if (isHashFormat(secret)) return verifyPassword(input, secret)
-  return input === secret
+  return verifyPassword(input, secret)
 }
 
 async function isAuthenticated(request, env) {
