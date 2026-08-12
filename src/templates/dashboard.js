@@ -1485,10 +1485,14 @@ export function renderDashboard() {
       if (bd) {
         const now = new Date();
         const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const thisBilling = new Date(now.getFullYear(), now.getMonth(), bd);
-        const daysToBilling = Math.round((thisBilling.getTime() - todayMid.getTime()) / 86400000);
-        if (daysToBilling > 0) return daysToBilling + ' 天后出账';
-        if (daysToBilling === 0) return '今天出账';
+        let nextBilling = new Date(now.getFullYear(), now.getMonth(), bd);
+        if (nextBilling.getTime() < todayMid.getTime()) {
+          nextBilling = new Date(now.getFullYear(), now.getMonth() + 1, bd);
+        }
+        const daysToBilling = Math.round((nextBilling.getTime() - todayMid.getTime()) / 86400000);
+        if (daysToBilling < card.daysToRepayment) {
+          return daysToBilling === 0 ? '今天出账' : daysToBilling + ' 天后出账';
+        }
       }
       return card.daysToRepayment + ' 天后到期';
     }
